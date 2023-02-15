@@ -8,18 +8,17 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 		return;
 	}
 
-	const data = JSON.parse(req.body) as Weather;
-
 	if (req.query.key !== process.env.STATION_KEY) {
 		res.status(401).end();
 	}
 
+	const { temp, humidity, pressure } = req.body as Weather;
+
 	const weather = await prisma.weather.create({
 		data: {
-			temp: data.temp,
-			humidity: data.humidity,
-			pressure: data.pressure,
-			timestamp: new Date(),
+			temp: parseFloat(temp.toFixed(2)),
+			humidity: parseFloat(humidity.toFixed(2)),
+			pressure: parseFloat(pressure.toFixed(2)),
 		},
 	});
 

@@ -8,9 +8,9 @@ datasource db {
 }
 
 model Weather {
-  id       Int   @id @default(autoincrement())
-  timestamp DateTime
-  temp     Float
-  humidity Float
-  pressure Float
+  id        Int      @id @default(autoincrement())
+  timestamp DateTime @default(now())
+  temp      Float
+  humidity  Float
+  pressure  Float
 }
