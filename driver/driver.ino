@@ -13,6 +13,7 @@
 
 #define I2C_SDA 21
 #define I2C_SCL 22
+#define WAKEUP_PIN 4
 
 #define i2c_Address 0x3c
 
@@ -23,6 +24,8 @@
 // Time between uploads to the database
 #define DATABASE_INTERVAL 10000
 #define SEALEVELPRESSURE_HPA (1013.25)
+
+#define INTEGER_LIMIT 2147483647
 
 const char *ntpServer = "pool.ntp.org";
 const long gmtOffset_sec = 3600;
@@ -35,10 +38,12 @@ Adafruit_SH1106G display = Adafruit_SH1106G(SCREEN_WIDTH, SCREEN_HEIGHT, &I2CWir
 Adafruit_BME280 bme;
 
 String uploadError = "";
-WiFiClientSecure client;
+
+int screenTime = 0;
 
 void setup()
 {
+  pinMode(WAKEUP_PIN, INPUT);
   Serial.begin(115200);
   I2CWire.begin(I2C_SDA, I2C_SCL, 100000);
 
@@ -102,8 +107,6 @@ void setup()
     display.println("Connected to WiFi");
     display.display();
 
-    client.setCACert(SUPABASE_CERT);
-
     xTaskCreatePinnedToCore(
         UploadData,   /* Task function. */
         "uploadData", /* name of task. */
@@ -127,6 +130,41 @@ void setup()
 
 void loop()
 {
+  // After 10s of inactivity, display the screen saver
+  if (screenTime >= 10000)
+  {
+    int x = random(0, SCREEN_WIDTH - 32);
+    int y = random(0, SCREEN_HEIGHT - 32);
+
+    int vx = random(-2, 2);
+    int vy = random(-2, 2);
+
+    // Animate until button a press
+    while (digitalRead(WAKEUP_PIN) == LOW)
+    {
+      display.clearDisplay();
+      display.drawBitmap(x, y, logo, 32, 32, SH110X_WHITE);
+      display.display();
+
+      x += vx;
+      y += vy;
+
+      if (x < 0 || x > SCREEN_WIDTH - 32)
+      {
+        vx *= -1;
+      }
+
+      if (y < 0 || y > SCREEN_HEIGHT - 32)
+      {
+        vy *= -1;
+      }
+
+      delay(50);
+    }
+
+    screenTime = 0;
+  }
+
   struct tm timeinfo;
   getLocalTime(&timeinfo);
 
@@ -135,11 +173,21 @@ void loop()
   int humidity = bme.readHumidity();
 
   display.clearDisplay();
-  display.setTextSize(1);
   display.setCursor(0, 0);
-  display.println("Temp: " + String(temp) + " C");
-  display.println("Pressure: " + String(pressure) + " hPa");
-  display.println("Humidity: " + String(humidity) + "%");
+  if (temp == INTEGER_LIMIT) // Avoid displaying invalid data
+  {
+    display.setTextSize(2);
+    display.println("Error while reading data");
+    display.setTextSize(1);
+    display.println("Please restart");
+  }
+  else
+  {
+    display.println("Temp: " + String(temp) + " C");
+    display.println("Pressure: " + String(pressure) + " hPa");
+    display.println("Humidity: " + String(humidity) + "%");
+    screenTime += 500;
+  }
 
   if (WiFi.status() == WL_CONNECTED)
   {
@@ -161,6 +209,11 @@ void loop()
   display.drawBitmap(SCREEN_WIDTH - 32, SCREEN_HEIGHT - 32, logo, 32, 32, SH110X_WHITE);
   display.display();
 
+  if (digitalRead(WAKEUP_PIN) == HIGH)
+  {
+    Serial.println("Waking up");
+  }
+
   delay(500);
 }
 
@@ -168,6 +221,13 @@ void UploadData(void *pvParameters)
 {
   while (1)
   {
+    int temp = bme.readTemperature();
+    if (temp == NULL || temp == INTEGER_LIMIT) // Avoid uploading invalid data
+    {
+      delay(DATABASE_INTERVAL);
+      return;
+    }
+
     HTTPClient http;
     http.begin(SUPABASE_URL);
     http.addHeader("Content-Type", "application/json");

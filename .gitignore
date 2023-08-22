@@ -39,3 +39,5 @@ next-env.d.ts
 # arduino driver
 driver/build
 driver/envs.h
+
+c_cpp_properties.json
