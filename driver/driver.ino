@@ -22,7 +22,7 @@
 #define OLED_RESET 19
 
 // Time between uploads to the database
-#define DATABASE_INTERVAL 10000
+#define DATABASE_INTERVAL 20000
 #define SEALEVELPRESSURE_HPA (1013.25)
 
 #define INTEGER_LIMIT 2147483647
@@ -63,6 +63,7 @@ void setup()
   if (!status)
   {
     Serial.println("Could not find the BME280 sensor!");
+    display.setTextSize(2);
     while (1)
     {
       display.clearDisplay();
