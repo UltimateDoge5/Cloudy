@@ -5,6 +5,7 @@ import { useEffect, useReducer, useRef, useState } from "react";
 import { Database } from "../../schema";
 import { DropletIcon } from "../components/icons";
 import { Line } from "react-chartjs-2";
+import { Uptime } from "../components/uptime";
 
 Chart.register(...registerables);
 
@@ -78,16 +79,27 @@ export default function Home() {
 	return (
 		<>
 			<Head>
-				<title>Cloudy</title>
+				<title>Cloudy | Weather station</title>
 			</Head>
 
-			<main className="m-auto grid h-full w-3/4 grid-cols-3 grid-rows-[128px,_auto] gap-2 p-2">
+			<main className="m-auto grid h-full w-4/5 grid-cols-[0.9fr_0.9fr_1.2fr] grid-rows-[128px,_auto] gap-2 p-2">
 				<div className="rounded bg-primary p-2 text-background">
 					<span className="text-6xl font-semibold">{current.temperature.toFixed(1)}</span>
 					<sup className="relative -top-5 text-3xl">°C</sup>
+					<p>
+						Last update was at
+						<span className="ml-2 font-semibold">
+							{new Date(current.timestamp).toLocaleString("en-us", {
+								hour: "numeric",
+								minute: "numeric",
+								second: "numeric",
+								hour12: false,
+							})}
+						</span>
+					</p>
 				</div>
 				<div className="grid grid-rows-2 gap-2">
-					<div className="flex items-center gap-2 rounded bg-secondary/60 p-2">
+					<div className="flex items-center gap-2 rounded bg-secondary/50 p-2">
 						<DropletIcon className="h-6 w-6" />
 						<div>
 							<p className="text-right text-xs text-slate-600/50">Air humidity</p>
@@ -109,10 +121,23 @@ export default function Home() {
 					</div>
 				</div>
 
-				<div className="row-span-2 h-full"></div>
+				<div className="row-span-2 ml-6 h-full">
+					<h1 className="text-3xl">Device status</h1>
+					<div className="flex flex-col gap-2">
+						Average interval between updates is{" "}
+						{history.length > 0 && (calcAvgInterval(history.map((r) => r.timestamp)) / 1000).toFixed(2)}{" "}
+						seconds
+						<div>
+							<span className="font-semibold">{history.length}</span> records in the last 24 hours
+						</div>
+						Uptime
+						<Uptime timestamps={history.map((r) => r.timestamp)} />
+					</div>
+				</div>
 				<div className="col-span-2 pt-4">
 					{history?.length > 0 && (
 						<Line
+							className="h-full w-full"
 							data={{
 								labels: history.map((r) =>
 									new Date(r.timestamp).toLocaleString("en-us", {
@@ -196,6 +221,15 @@ export default function Home() {
 		</>
 	);
 }
+
+const calcAvgInterval = (timestamps: string[]) => {
+	let sum = 0;
+	for (let i = 0; i < timestamps.length - 1; i++) {
+		const diff = new Date(timestamps[i + 1]).getTime() - new Date(timestamps[i]).getTime();
+		sum += diff;
+	}
+	return sum / timestamps.length;
+};
 
 const calculateDewPoint = (temperature: number, humidity: number) => {
 	const a = 17.27;

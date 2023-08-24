@@ -225,6 +225,7 @@ void UploadData(void *pvParameters)
     int temp = bme.readTemperature();
     if (temp == NULL || temp == INTEGER_LIMIT) // Avoid uploading invalid data
     {
+      Serial.println("Error while reading data, skipping upload");
       delay(DATABASE_INTERVAL);
       return;
     }
