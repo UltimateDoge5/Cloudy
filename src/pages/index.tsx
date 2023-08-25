@@ -1,9 +1,9 @@
 import { Chart, registerables } from "chart.js";
 import Head from "next/head";
 import { RealtimeChannel, createClient } from "@supabase/supabase-js";
-import { useEffect, useReducer, useRef, useState } from "react";
+import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { Database } from "../../schema";
-import { DropletIcon } from "../components/icons";
+import { CloudIcon, DropletIcon } from "../components/icons";
 import { Line } from "react-chartjs-2";
 import { Uptime } from "../components/uptime";
 
@@ -17,6 +17,7 @@ export default function Home() {
 		timestamp: "",
 	});
 
+	const [history, setHistory] = useState<Row[]>([]);
 	const [scales, setScales] = useReducer(
 		(prev: Scales, next: Partial<Scales>) => ({
 			...prev,
@@ -28,8 +29,6 @@ export default function Home() {
 			y2: false,
 		},
 	);
-
-	const [history, setHistory] = useState<Row[]>([]);
 
 	const subscriptionRef = useRef<RealtimeChannel | null>(null);
 
@@ -82,42 +81,59 @@ export default function Home() {
 				<title>Cloudy | Weather station</title>
 			</Head>
 
-			<main className="m-auto grid h-full w-4/5 grid-cols-[0.9fr_0.9fr_1.2fr] grid-rows-[128px,_auto] gap-2 p-2">
-				<div className="rounded bg-primary p-2 text-background">
-					<span className="text-6xl font-semibold">{current.temperature.toFixed(1)}</span>
-					<sup className="relative -top-5 text-3xl">°C</sup>
-					<p>
-						Last update was at
-						<span className="ml-2 font-semibold">
-							{new Date(current.timestamp).toLocaleString("en-us", {
-								hour: "numeric",
-								minute: "numeric",
-								second: "numeric",
-								hour12: false,
-							})}
-						</span>
-					</p>
+			<main className="m-auto grid h-full w-4/5 grid-cols-[0.8fr_1fr_1.2fr] grid-rows-[128px,_auto] gap-2 p-2">
+				<div
+					className={`rounded bg-primary p-2 text-background ${
+						current.timestamp === "" ? "animate-pulse" : ""
+					}`}
+				>
+					{current.timestamp !== "" && (
+						<>
+							<span className="text-7xl font-semibold">{current.temperature.toFixed(1)}</span>
+							<sup className="relative -top-6 text-4xl">°C</sup>
+							<p className="mt-2">
+								Last update was at
+								<span className="ml-1 font-semibold">
+									{new Date(current.timestamp).toLocaleString("en-us", {
+										hour: "numeric",
+										minute: "numeric",
+										second: "numeric",
+										hour12: false,
+									})}
+								</span>
+							</p>
+						</>
+					)}
 				</div>
 				<div className="grid grid-rows-2 gap-2">
-					<div className="flex items-center gap-2 rounded bg-secondary/50 p-2">
-						<DropletIcon className="h-6 w-6" />
-						<div>
-							<p className="text-right text-xs text-slate-600/50">Air humidity</p>
-							<span className="ml-2 text-2xl font-semibold">{current.humidity.toFixed(1)}</span> %
-						</div>
-						<div>
-							<p className="text-right text-xs text-slate-600/50">Dew point</p>
-							<span className="ml-2 text-2xl font-semibold">
-								{calculateDewPoint(current.temperature, current.humidity).toFixed(1)}
-							</span>{" "}
-							<sup className="relative -top-1 text-lg">°C</sup>
-						</div>
+					<div className="flex items-center gap-2 rounded bg-secondary/70 p-2 shadow-inner">
+						{current.timestamp !== "" && (
+							<>
+								<DropletIcon className="h-6 w-6" />
+								<div>
+									<p className="text-right text-xs text-slate-600/60">Air humidity</p>
+									<span className="ml-2 text-2xl font-semibold">{current.humidity.toFixed(1)}</span> %
+								</div>
+								<div>
+									<p className="text-right text-xs text-slate-600/60">Dew point</p>
+									<span className="ml-2 text-2xl font-semibold">
+										{calculateDewPoint(current.temperature, current.humidity).toFixed(1)}
+									</span>{" "}
+									<sup className="relative -top-1 text-lg">°C</sup>
+								</div>
+							</>
+						)}
 					</div>
-					<div className="rounded bg-secondary p-2 text-2xl">
-						<div className="w-fit">
-							<p className="text-right text-xs text-slate-600/50">Atmospheric pressure</p>
-							<span className="ml-2 font-semibold">{current.pressure.toFixed(1)}</span> hPa
-						</div>
+					<div className="gap-2rounded flex items-center bg-secondary p-2 text-2xl shadow-inner">
+						{current.timestamp !== "" && (
+							<>
+								<CloudIcon className="h-6 w-6" />
+								<div className="w-fit">
+									<p className="text-right text-xs text-slate-600/60">Atmospheric pressure</p>
+									<span className="ml-2 font-semibold">{current.pressure.toFixed(1)}</span> hPa
+								</div>
+							</>
+						)}
 					</div>
 				</div>
 
@@ -130,12 +146,14 @@ export default function Home() {
 						<div>
 							<span className="font-semibold">{history.length}</span> records in the last 24 hours
 						</div>
-						Uptime
-						<Uptime timestamps={history.map((r) => r.timestamp)} />
+						<div className="relative top-6">
+							<h2 className="text-xl">Uptime in the last 24 hours</h2>
+							<Uptime timestamps={history.map((r) => r.timestamp)} />
+						</div>
 					</div>
 				</div>
 				<div className="col-span-2 pt-4">
-					{history?.length > 0 && (
+					{history?.length > 0 ? (
 						<Line
 							className="h-full w-full"
 							data={{
@@ -171,6 +189,7 @@ export default function Home() {
 								],
 							}}
 							options={{
+								animation: false,
 								elements: {
 									point: {
 										radius: 0,
@@ -200,7 +219,6 @@ export default function Home() {
 										grid: {
 											drawOnChartArea: false,
 										},
-										// max: 1015,
 									},
 								},
 								plugins: {
@@ -215,6 +233,8 @@ export default function Home() {
 								},
 							}}
 						/>
+					) : (
+						<div className="mt-2 h-52 w-full animate-pulse rounded bg-secondary/40" />
 					)}
 				</div>
 			</main>

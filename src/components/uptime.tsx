@@ -17,6 +17,8 @@ labels[47] = "Now";
 export const Uptime = ({ timestamps }: { timestamps: string[] }) => {
 	const uptime = useMemo(() => calculateDeviceUptime(timestamps), [timestamps]);
 
+	if (timestamps.length === 0) return <div className="mt-2 h-52 w-full animate-pulse rounded bg-secondary/40" />;
+
 	return (
 		<Bar
 			data={{
@@ -32,6 +34,7 @@ export const Uptime = ({ timestamps }: { timestamps: string[] }) => {
 			options={{
 				scales: {
 					y: {
+						position: "right",
 						beginAtZero: true,
 						max: 90,
 					},
