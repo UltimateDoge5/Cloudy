@@ -1,213 +1,272 @@
-import { Weather } from "@prisma/client";
-import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import { useEffect, useState } from "react";
 import { Chart, registerables } from "chart.js";
-import { Chart as ChartComponent } from "react-chartjs-2";
 import Head from "next/head";
-import moment from "moment";
+import { RealtimeChannel, createClient } from "@supabase/supabase-js";
+import { useEffect, useMemo, useReducer, useRef, useState } from "react";
+import { Database } from "../../schema";
+import { CloudIcon, DropletIcon } from "../components/icons";
+import { Line } from "react-chartjs-2";
+import { Uptime } from "../components/uptime";
 
 Chart.register(...registerables);
 
 export default function Home() {
-	const [recentData, setRecentData] = useState<Weather[]>([]);
-	const [yearData, setData] = useState<Weather[]>([]);
-	const supabase = useSupabaseClient();
+	const [current, setCurrent] = useReducer((prev: Row, next: Partial<Row>) => ({ ...prev, ...next }), {
+		temperature: -1,
+		pressure: -1,
+		humidity: -1,
+		timestamp: "",
+	});
+
+	const [history, setHistory] = useState<Row[]>([]);
+	const [scales, setScales] = useReducer(
+		(prev: Scales, next: Partial<Scales>) => ({
+			...prev,
+			...next,
+		}),
+		{
+			y: true,
+			y1: true,
+			y2: false,
+		},
+	);
+
+	const subscriptionRef = useRef<RealtimeChannel | null>(null);
 
 	useEffect(() => {
-		fetch("/api/yearData")
-			.then((res) => res.json())
-			.then((data) => setData(data));
+		const supabase = createClient<Database>(
+			process.env.NEXT_PUBLIC_SUPABASE_URL!,
+			process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+		);
 
-		fetch("/api/recentData")
-			.then((res) => res.json())
-			.then((data) => setRecentData(data));
+		supabase
+			.from("weather")
+			.select("temperature, pressure, humidity, timestamp")
+			.order("id", { ascending: false })
+			.limit(1)
+			.single()
+			.then(({ data }) => setCurrent(data!)); //Data is never null
+
+		supabase
+			.from("weather")
+			.select("temperature, pressure,humidity, timestamp")
+			.order("id", { ascending: true })
+			// Show only last 24 hours
+			.gt("timestamp", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+			.then(({ data }) => setHistory(data!));
+
+		subscriptionRef.current = supabase
+			.channel("table-db-changes")
+			.on(
+				"postgres_changes",
+				{
+					event: "INSERT",
+					schema: "public",
+					table: "weather",
+				},
+				(payload) => {
+					const row = payload.new as Row;
+					setCurrent(row);
+				},
+			)
+			.subscribe();
+
+		return () => {
+			subscriptionRef.current?.unsubscribe();
+		};
 	}, []);
 
 	return (
 		<>
 			<Head>
-				<title>Cloudy</title>
+				<title>Cloudy | Weather station</title>
 			</Head>
-			<header className="py-2 px-4">
-				<h1 className="text-4xl font-bold">Cloudy</h1>
-				<h2>Graph weather data however you like!</h2>
-			</header>
-			<main className="w-4/5 my-4 mx-auto rounded-md border p-4 ">
-				<h3>Data for last {}</h3>
-				<ChartComponent
-					type="line"
-					data={{
-						labels: recentData.map((data) =>
-							moment(data.timestamp).format("HH:mm:ss ")
-						),
-						datasets: [
-							{
-								label: "Temperature ()",
-								data: recentData.map((d) => d.temp),
-								order: 1,
-								stack: "temp"
-							},
-							{
-								label: "Humidity (%)",
-								data: recentData.map((d) => d.humidity),
-								order: 2,
-								stack: "linear",
-								type: "line",
-								yAxisID: "y1"
-							},
-							{
-								type: "line",
-								label: "Pressure (hPa)",
-								data: recentData.map((d) => d.pressure),
-								order: 3,
-								stack: "pressure",
-								yAxisID: "y1"
-							}
-						]
-					}}
-					options={{
-						responsive: true,
-						scales: {
-							y: {
-								type: "linear",
-								display: true,
-								position: "left",
-								max: 50,
-								min: -10,
-								grid: {
-									color: "#b4b4b4",
-									z: 0
 
-								}
-							},
-							y1: {
-								type: "linear",
-								display: true,
-								position: "right",
-								grid: {
-									drawOnChartArea: false
-								}
-							},
-							y2: {
-								type: "linear",
-								display: true,
-								position: "right",
-								grid: {
-									drawOnChartArea: false
-								}
-							}
-						}
-					}}
-				/>
+			<main className="m-auto grid h-full w-4/5 grid-cols-[0.8fr_1fr_1.2fr] grid-rows-[128px,_auto] gap-2 p-2">
+				<div
+					className={`rounded bg-primary p-2 text-background ${
+						current.timestamp === "" ? "animate-pulse" : ""
+					}`}
+				>
+					{current.timestamp !== "" && (
+						<>
+							<span className="text-7xl font-semibold">{current.temperature.toFixed(1)}</span>
+							<sup className="relative -top-6 text-4xl">°C</sup>
+							<p className="mt-2">
+								Last update was at
+								<span className="ml-1 font-semibold">
+									{new Date(current.timestamp).toLocaleString("en-us", {
+										hour: "numeric",
+										minute: "numeric",
+										second: "numeric",
+										hour12: false,
+									})}
+								</span>
+							</p>
+						</>
+					)}
+				</div>
+				<div className="grid grid-rows-2 gap-2">
+					<div className="flex items-center gap-2 rounded bg-secondary/70 p-2 shadow-inner">
+						{current.timestamp !== "" && (
+							<>
+								<DropletIcon className="h-6 w-6" />
+								<div>
+									<p className="text-right text-xs text-slate-600/60">Air humidity</p>
+									<span className="ml-2 text-2xl font-semibold">{current.humidity.toFixed(1)}</span> %
+								</div>
+								<div>
+									<p className="text-right text-xs text-slate-600/60">Dew point</p>
+									<span className="ml-2 text-2xl font-semibold">
+										{calculateDewPoint(current.temperature, current.humidity).toFixed(1)}
+									</span>{" "}
+									<sup className="relative -top-1 text-lg">°C</sup>
+								</div>
+							</>
+						)}
+					</div>
+					<div className="gap-2rounded flex items-center bg-secondary p-2 text-2xl shadow-inner">
+						{current.timestamp !== "" && (
+							<>
+								<CloudIcon className="h-6 w-6" />
+								<div className="w-fit">
+									<p className="text-right text-xs text-slate-600/60">Atmospheric pressure</p>
+									<span className="ml-2 font-semibold">{current.pressure.toFixed(1)}</span> hPa
+								</div>
+							</>
+						)}
+					</div>
+				</div>
+
+				<div className="row-span-2 ml-6 h-full">
+					<h1 className="text-3xl">Device status</h1>
+					<div className="flex flex-col gap-2">
+						Average interval between updates is{" "}
+						{history.length > 0 && (calcAvgInterval(history.map((r) => r.timestamp)) / 1000).toFixed(2)}{" "}
+						seconds
+						<div>
+							<span className="font-semibold">{history.length}</span> records in the last 24 hours
+						</div>
+						<div className="relative top-6">
+							<h2 className="text-xl">Uptime in the last 24 hours</h2>
+							<Uptime timestamps={history.map((r) => r.timestamp)} />
+						</div>
+					</div>
+				</div>
+				<div className="col-span-2 pt-4">
+					{history?.length > 0 ? (
+						<Line
+							className="h-full w-full"
+							data={{
+								labels: history.map((r) =>
+									new Date(r.timestamp).toLocaleString("en-us", {
+										hour: "numeric",
+										minute: "numeric",
+										second: "numeric",
+										hour12: false,
+									}),
+								),
+								datasets: [
+									{
+										data: history.map((r) => r.temperature.toFixed(2)),
+										label: "Temperature",
+										tension: 0.1,
+										hidden: !scales.y,
+									},
+									{
+										data: history.map((r) => r.humidity.toFixed(2)),
+										label: "Humidity",
+										yAxisID: "y1",
+										tension: 0.1,
+										hidden: !scales.y1,
+									},
+									{
+										data: history.map((r) => r.pressure.toFixed(2)),
+										label: "Pressure",
+										yAxisID: "y2",
+										tension: 0.1,
+										hidden: !scales.y2,
+									},
+								],
+							}}
+							options={{
+								animation: false,
+								elements: {
+									point: {
+										radius: 0,
+									},
+								},
+								scales: {
+									y: {
+										type: "linear",
+										display: scales.y,
+										position: "left",
+										grid: {
+											drawOnChartArea: false,
+										},
+									},
+									y1: {
+										type: "linear",
+										position: "right",
+										display: scales.y1,
+										ticks: {},
+										grid: {
+											drawOnChartArea: false,
+										},
+									},
+									y2: {
+										type: "linear",
+										display: scales.y2,
+										grid: {
+											drawOnChartArea: false,
+										},
+									},
+								},
+								plugins: {
+									legend: {
+										onClick: (e, v, g) => {
+											const index = v.datasetIndex;
+											// Set y, y1 or y2
+											const key = `y${index || ""}` as keyof Scales;
+											setScales({ [key]: !scales[key] });
+										},
+									},
+								},
+							}}
+						/>
+					) : (
+						<div className="mt-2 h-52 w-full animate-pulse rounded bg-secondary/40" />
+					)}
+				</div>
 			</main>
-
-			<section className="w-4/5 mx-auto my-4 rounded-md border p-4">
-				<h3>Average data for each month</h3>
-				<ChartComponent
-					type="bar"
-					data={{
-						labels: months,
-						datasets: [
-							{
-								label: "Temperature ()",
-								data: yearData.map((d) => d.temp),
-								order: 1,
-								stack: "temp"
-							},
-							{
-								label: "Humidity (%)",
-								data: yearData.map((d) => d.humidity),
-								order: 2,
-								stack: "linear",
-								type: "line",
-								yAxisID: "y1"
-							},
-							{
-								type: "line",
-								label: "Pressure (hPa)",
-								data: yearData.map((d) => d.pressure),
-								order: 3,
-								stack: "pressure",
-								yAxisID: "y1"
-							}
-						]
-					}}
-					options={{
-						responsive: true,
-						skipNull: true,
-						scales: {
-							y: {
-								type: "linear",
-								display: true,
-								position: "left",
-								max: 50,
-								min: -10,
-								grid: {
-									color: "#b4b4b4",
-									z: 0
-
-								}
-							},
-							y1: {
-								type: "linear",
-								display: true,
-								position: "right",
-								grid: {
-									drawOnChartArea: false
-								}
-							},
-							y2: {
-								type: "linear",
-								display: true,
-								position: "right",
-								grid: {
-									drawOnChartArea: false
-								}
-							}
-						}
-					}}
-				/>
-			</section>
-			<div className="w-4/5 mx-auto rounded-md border py-2 my-2 px-4 flex items-center gap-2">
-				<div className={`rounded-full w-4 h-4 inline-block ${getLED(new Date(recentData?.[0]?.timestamp))}`}/>
-				Weather station is {recentData.length && isOnline(new Date(recentData[0].timestamp))} - last update was{" "}
-				{recentData.length && moment(recentData[0].timestamp).fromNow()}
-			</div>
 		</>
 	);
 }
 
-const isOnline = (date: Date) => {
-	const minuteAgo = Date.now() - 1000 * 60;
-	if (date.getTime() > minuteAgo) {
-		return "online";
-	} else {
-		return "offline";
+const calcAvgInterval = (timestamps: string[]) => {
+	let sum = 0;
+	for (let i = 0; i < timestamps.length - 1; i++) {
+		const diff = new Date(timestamps[i + 1]).getTime() - new Date(timestamps[i]).getTime();
+		sum += diff;
 	}
+	return sum / timestamps.length;
 };
 
-const getLED = (date: Date | undefined) => {
-	if(!date) return "bg-gray-500";
+const calculateDewPoint = (temperature: number, humidity: number) => {
+	const a = 17.27;
+	const b = 237.7;
+	const t = (a * temperature) / (b + temperature) + Math.log(humidity / 100);
+	return (b * t) / (a - t);
+};
 
-	const minuteAgo = Date.now() - 1000 * 60;
-	if (date.getTime() > minuteAgo) {
-		return "bg-green-400";
-	} else {
-		return "bg-red-400";
-	}
+interface Row {
+	temperature: number;
+	pressure: number;
+	humidity: number;
+	timestamp: string;
 }
 
-const months = [
-	"January",
-	"February",
-	"March",
-	"April",
-	"May",
-	"June",
-	"July",
-	"August",
-	"September",
-	"October",
-	"November",
-	"December"
-];
+interface Scales {
+	y: boolean;
+	y1: boolean;
+	y2: boolean;
+}
