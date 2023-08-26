@@ -1,7 +1,7 @@
 import { Chart, registerables } from "chart.js";
 import Head from "next/head";
-import { RealtimeChannel, createClient } from "@supabase/supabase-js";
-import { useEffect, useMemo, useReducer, useRef, useState } from "react";
+import { createClient, RealtimeChannel } from "@supabase/supabase-js";
+import { useEffect, useReducer, useRef, useState } from "react";
 import { Database } from "../../schema";
 import { CloudIcon, DropletIcon } from "../components/icons";
 import { Line } from "react-chartjs-2";
@@ -38,15 +38,16 @@ export default function Home() {
 			process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
 		);
 
-		supabase
+		void supabase
 			.from("weather")
 			.select("temperature, pressure, humidity, timestamp")
 			.order("id", { ascending: false })
 			.limit(1)
 			.single()
-			.then(({ data }) => setCurrent(data!)); //Data is never null
+			.then(({ data }) => setCurrent(data!)) //Data is never null
 
-		supabase
+
+		void supabase
 			.from("weather")
 			.select("temperature, pressure,humidity, timestamp")
 			.order("id", { ascending: true })
@@ -71,7 +72,7 @@ export default function Home() {
 			.subscribe();
 
 		return () => {
-			subscriptionRef.current?.unsubscribe();
+			void subscriptionRef.current?.unsubscribe();
 		};
 	}, []);
 
@@ -190,6 +191,7 @@ export default function Home() {
 							}}
 							options={{
 								animation: false,
+								color:"#010905",
 								elements: {
 									point: {
 										radius: 0,
@@ -223,10 +225,11 @@ export default function Home() {
 								},
 								plugins: {
 									legend: {
-										onClick: (e, v, g) => {
-											const index = v.datasetIndex;
+										onClick: (_e, l) => {
+											const index = l.datasetIndex;
+											if(index === undefined) return;
 											// Set y, y1 or y2
-											const key = `y${index || ""}` as keyof Scales;
+											const key = Object.keys(scales)[index] as keyof Scales;
 											setScales({ [key]: !scales[key] });
 										},
 									},

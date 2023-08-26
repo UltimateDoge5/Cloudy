@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Bar } from "react-chartjs-2";
 
 const relativeTime = new Intl.RelativeTimeFormat("en-Us", { style: "narrow" });
@@ -26,12 +26,13 @@ export const Uptime = ({ timestamps }: { timestamps: string[] }) => {
 				datasets: [
 					{
 						data: uptime,
-						label: "Recieved updates",
+						label: "Received updates",
 						backgroundColor: "#2172ca",
 					},
 				],
 			}}
 			options={{
+				color:"#010905",
 				scales: {
 					y: {
 						position: "right",
@@ -44,17 +45,17 @@ export const Uptime = ({ timestamps }: { timestamps: string[] }) => {
 	);
 };
 /**
- * Caclulate the devices uptime based on the provided timestamps for the last 24 hours
- * Calculate the amount of records per 30 minutes
- * If no updates are received for 30 minutes, return 0
+ * Calculate the devices uptime based on the provided timestamps for the last 24 hours
+ * Calculate the number of records per 30 minutes
+ * If no updates are received for 30 minutes, return zero
  * If updates are received, increment the counter
  * @param timestamps
  */
 const calculateDeviceUptime = (timestamps: string[]): number[] => {
-	const uptime = new Array(48).fill(0);
+	const uptime = new Array(48).fill(0) as number[];
 	const now = new Date().getTime();
 
-	// Check in which 30 minute interval the timestamp is
+	// Check in which 30-minute interval the timestamp is
 	// If the timestamp is older than 24 hours, ignore it
 	for (const timestamp of timestamps) {
 		const timestampDate = new Date(timestamp).getTime();

@@ -9,6 +9,7 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SH110X.h>
 #include "logo.h"
+// Contains the WiFi credentials and the Supabase URL and key
 #include "envs.h"
 
 #define I2C_SDA 21
