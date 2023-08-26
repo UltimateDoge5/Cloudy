@@ -6,15 +6,16 @@ import { Database } from "../../schema";
 import { CloudIcon, DropletIcon } from "../components/icons";
 import { Line } from "react-chartjs-2";
 import { Uptime } from "../components/uptime";
+import { ChartJSOrUndefined } from "react-chartjs-2/dist/types";
 import "chartjs-adapter-dayjs-4/dist/chartjs-adapter-dayjs-4.esm.js";
 
 Chart.register(...registerables);
 
 export default function Home() {
 	const [current, setCurrent] = useReducer((prev: Row, next: Partial<Row>) => ({ ...prev, ...next }), {
-		temperature: -1,
-		pressure: -1,
-		humidity: -1,
+		temperature: 0,
+		pressure: 0,
+		humidity: 0,
 		timestamp: "",
 	});
 
@@ -30,6 +31,8 @@ export default function Home() {
 			y2: false,
 		},
 	);
+
+	const chartRef = useRef<ChartJSOrUndefined<"line", string[], number> | undefined>(undefined);
 
 	const subscriptionRef = useRef<RealtimeChannel | null>(null);
 
@@ -66,6 +69,11 @@ export default function Home() {
 				},
 				(payload) => {
 					const row = payload.new as Row;
+					const now = new Date().getTime();
+					const newHistory = [...history, row].filter(
+						(r) => new Date(r.timestamp).getTime() > now - 24 * 60 * 60 * 1000,
+					);
+					setHistory(newHistory);
 					setCurrent(row);
 				},
 			)
@@ -76,13 +84,25 @@ export default function Home() {
 		};
 	}, []);
 
+	// Perform the update of the chart manually
+	// The component param one causes flashing
+	useEffect(() => {
+		if (chartRef.current) {
+			chartRef.current.data.labels = history.map((r) => new Date(r.timestamp).getTime());
+			chartRef.current.data.datasets[0].data = history.map((r) => r.temperature.toFixed(2));
+			chartRef.current.data.datasets[1].data = history.map((r) => r.humidity.toFixed(2));
+			chartRef.current.data.datasets[2].data = history.map((r) => r.pressure.toFixed(2));
+			chartRef.current.update();
+		}
+	}, [history]);
+
 	return (
 		<>
 			<Head>
 				<title>Cloudy | Weather station</title>
 			</Head>
 
-			<main className="m-auto grid h-full w-4/5 grid-cols-[0.8fr_1fr_1.2fr] grid-rows-[128px,_auto] gap-2 p-2">
+			<main className="m-auto grid h-full w-4/5 grid-cols-1 grid-rows-[128px,_auto] gap-2 p-2 md:grid-cols-[0.8fr_1fr_1.2fr]">
 				<div
 					className={`rounded bg-primary p-2 text-background ${
 						current.timestamp === "" ? "animate-pulse" : ""
@@ -125,7 +145,7 @@ export default function Home() {
 							</>
 						)}
 					</div>
-					<div className="gap-2rounded flex items-center bg-secondary p-2 text-2xl shadow-inner">
+					<div className="flex items-center gap-2 rounded bg-secondary p-2 text-2xl shadow-inner">
 						{current.timestamp !== "" && (
 							<>
 								<CloudIcon className="h-6 w-6" />
@@ -153,10 +173,10 @@ export default function Home() {
 						</div>
 					</div>
 				</div>
-				<div className="col-span-2 pt-4" id="main-chart">
+				<div className="col-span-2 pt-4">
 					{history?.length > 0 ? (
 						<Line
-							id="chart"
+							ref={chartRef}
 							className="h-full w-full"
 							data={{
 								labels: history.map((r) => new Date(r.timestamp).getTime()),
@@ -196,6 +216,9 @@ export default function Home() {
 										type: "timeseries",
 										time: {
 											unit: "hour",
+											displayFormats: {
+												hour: "HH:mm",
+											},
 										},
 									},
 									y: {

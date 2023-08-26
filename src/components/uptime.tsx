@@ -1,5 +1,6 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { Bar } from "react-chartjs-2";
+import { type ChartJSOrUndefined } from "react-chartjs-2/dist/types";
 
 const relativeTime = new Intl.RelativeTimeFormat("en-Us", { style: "narrow" });
 
@@ -16,11 +17,22 @@ labels[47] = "Now";
 
 export const Uptime = ({ timestamps }: { timestamps: string[] }) => {
 	const uptime = useMemo(() => calculateDeviceUptime(timestamps), [timestamps]);
+	const chartRef = useRef<ChartJSOrUndefined<"bar", number[]> | undefined>(undefined);
+
+	// Perform the update of the chart manually
+	// The component param one causes flashing
+	useEffect(() => {
+		if (chartRef.current) {
+			chartRef.current.data.datasets[0].data = uptime;
+			chartRef.current.update();
+		}
+	}, [uptime]);
 
 	if (timestamps.length === 0) return <div className="mt-2 h-52 w-full animate-pulse rounded bg-secondary/40" />;
 
 	return (
 		<Bar
+			ref={chartRef}
 			data={{
 				labels,
 				datasets: [
@@ -32,7 +44,7 @@ export const Uptime = ({ timestamps }: { timestamps: string[] }) => {
 				],
 			}}
 			options={{
-				color:"#010905",
+				color: "#010905",
 				scales: {
 					y: {
 						position: "right",
@@ -44,6 +56,7 @@ export const Uptime = ({ timestamps }: { timestamps: string[] }) => {
 		/>
 	);
 };
+
 /**
  * Calculate the devices uptime based on the provided timestamps for the last 24 hours
  * Calculate the number of records per 30 minutes
