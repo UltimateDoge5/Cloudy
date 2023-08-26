@@ -8,6 +8,7 @@ import { Line } from "react-chartjs-2";
 import { Uptime } from "../components/uptime";
 import { ChartJSOrUndefined } from "react-chartjs-2/dist/types";
 import "chartjs-adapter-dayjs-4/dist/chartjs-adapter-dayjs-4.esm.js";
+import dayjs from "dayjs";
 
 Chart.register(...registerables);
 
@@ -69,11 +70,10 @@ export default function Home() {
 				},
 				(payload) => {
 					const row = payload.new as Row;
-					const now = new Date().getTime();
-					const newHistory = [...history, row].filter(
-						(r) => new Date(r.timestamp).getTime() > now - 24 * 60 * 60 * 1000,
-					);
-					setHistory(newHistory);
+					setHistory((prev) => [
+						...prev.filter((r) => dayjs(r.timestamp).isAfter(dayjs().subtract(24, "hour"))),
+						row,
+					]);
 					setCurrent(row);
 				},
 			)
