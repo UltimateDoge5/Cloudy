@@ -6,6 +6,7 @@ import { Database } from "../../schema";
 import { CloudIcon, DropletIcon } from "../components/icons";
 import { Line } from "react-chartjs-2";
 import { Uptime } from "../components/uptime";
+import "chartjs-adapter-dayjs-4/dist/chartjs-adapter-dayjs-4.esm.js";
 
 Chart.register(...registerables);
 
@@ -44,8 +45,7 @@ export default function Home() {
 			.order("id", { ascending: false })
 			.limit(1)
 			.single()
-			.then(({ data }) => setCurrent(data!)) //Data is never null
-
+			.then(({ data }) => setCurrent(data!)); //Data is never null
 
 		void supabase
 			.from("weather")
@@ -153,19 +153,13 @@ export default function Home() {
 						</div>
 					</div>
 				</div>
-				<div className="col-span-2 pt-4">
+				<div className="col-span-2 pt-4" id="main-chart">
 					{history?.length > 0 ? (
 						<Line
+							id="chart"
 							className="h-full w-full"
 							data={{
-								labels: history.map((r) =>
-									new Date(r.timestamp).toLocaleString("en-us", {
-										hour: "numeric",
-										minute: "numeric",
-										second: "numeric",
-										hour12: false,
-									}),
-								),
+								labels: history.map((r) => new Date(r.timestamp).getTime()),
 								datasets: [
 									{
 										data: history.map((r) => r.temperature.toFixed(2)),
@@ -191,13 +185,19 @@ export default function Home() {
 							}}
 							options={{
 								animation: false,
-								color:"#010905",
+								color: "#010905",
 								elements: {
 									point: {
 										radius: 0,
 									},
 								},
 								scales: {
+									x: {
+										type: "timeseries",
+										time: {
+											unit: "hour",
+										},
+									},
 									y: {
 										type: "linear",
 										display: scales.y,
@@ -205,14 +205,21 @@ export default function Home() {
 										grid: {
 											drawOnChartArea: false,
 										},
+										ticks: {
+											callback: (value) => value + "°C",
+										},
 									},
 									y1: {
 										type: "linear",
 										position: "right",
 										display: scales.y1,
-										ticks: {},
+										max: 100,
+										min: 0,
 										grid: {
 											drawOnChartArea: false,
+										},
+										ticks: {
+											callback: (value) => value + "%",
 										},
 									},
 									y2: {
@@ -227,11 +234,16 @@ export default function Home() {
 									legend: {
 										onClick: (_e, l) => {
 											const index = l.datasetIndex;
-											if(index === undefined) return;
+											if (index === undefined) return;
 											// Set y, y1 or y2
 											const key = Object.keys(scales)[index] as keyof Scales;
 											setScales({ [key]: !scales[key] });
 										},
+									},
+									decimation: {
+										enabled: true,
+										algorithm: "lttb",
+										samples: 100,
 									},
 								},
 							}}
