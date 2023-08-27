@@ -26,8 +26,8 @@
 #define DATABASE_INTERVAL 20000
 #define SEALEVELPRESSURE_HPA (1013.25)
 
-#define DEBUG_LED true   // Set to true to enable the debug LED
-#define DEBUG_LED_PIN 13 // Onboard LED of the ESP32 dev board
+#define DEBUG_LED true  // Set to true to enable the debug LED
+#define DEBUG_LED_PIN 2 // Onboard LED of the ESP32 dev board
 
 #define INTEGER_LIMIT 2147483647
 
@@ -69,19 +69,29 @@ void setup()
   if (!status)
   {
     Serial.println("Could not find the BME280 sensor!");
-    display.setTextSize(2);
+#ifdef DEBUG_LED
+    digitalWrite(DEBUG_LED_PIN, HIGH);
+#endif
     while (1)
     {
       display.clearDisplay();
       display.setCursor(0, 0);
+      display.setTextSize(2);
       display.invertDisplay(false);
-      display.println("BME280 sensor not found!");
+      display.println("No sensor!");
+      display.setTextSize(1);
+      display.println("No BME280 sensor.");
+      display.println("Please check the wiring");
       display.display();
       delay(1500);
       display.clearDisplay();
       display.setCursor(0, 0);
+      display.setTextSize(2);
       display.invertDisplay(true);
-      display.println("BME280 sensor not found!");
+      display.println("No sensor!");
+      display.setTextSize(1);
+      display.println("No BME280 sensor.");
+      display.println("Please check the wiring");
       display.display();
       delay(1500);
     }
@@ -181,7 +191,7 @@ void loop()
 
   display.clearDisplay();
   display.setCursor(0, 0);
-  if (temp == INTEGER_LIMIT) // Avoid displaying invalid data
+  if (temp == INTEGER_LIMIT || pressure < 0) // Avoid displaying invalid data
   {
     display.setTextSize(2);
     display.println("Error while reading data");
@@ -227,7 +237,8 @@ void UploadData(void *pvParameters)
   while (1)
   {
     int temp = bme.readTemperature();
-    if (temp == NULL || temp == INTEGER_LIMIT) // Avoid uploading invalid data
+    int pressure = bme.readPressure() / 100.0F;
+    if (temp == NULL || temp == INTEGER_LIMIT || pressure < 0) // Avoid uploading invalid data
     {
       Serial.println("Error while reading data, skipping upload");
 #ifdef DEBUG_LED

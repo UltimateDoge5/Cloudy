@@ -34,7 +34,6 @@ export const Uptime = ({ timestamps }: { timestamps: string[] }) => {
 
 	return (
 		<Bar
-			className="h-full w-full"
 			ref={chartRef}
 			data={{
 				labels,

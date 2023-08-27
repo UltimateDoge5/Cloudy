@@ -1,14 +1,14 @@
+import { RealtimeChannel, createClient } from "@supabase/supabase-js";
 import { Chart, registerables } from "chart.js";
-import Head from "next/head";
-import { createClient, RealtimeChannel } from "@supabase/supabase-js";
-import { useEffect, useReducer, useRef, useState } from "react";
-import { Database } from "../../schema";
-import { CloudIcon, DropletIcon } from "../components/icons";
-import { Line } from "react-chartjs-2";
-import { Uptime } from "../components/uptime";
-import { ChartJSOrUndefined } from "react-chartjs-2/dist/types";
 import "chartjs-adapter-dayjs-4/dist/chartjs-adapter-dayjs-4.esm.js";
 import dayjs from "dayjs";
+import Head from "next/head";
+import { useEffect, useReducer, useRef, useState } from "react";
+import { Line } from "react-chartjs-2";
+import { ChartJSOrUndefined } from "react-chartjs-2/dist/types";
+import { Database } from "../../schema";
+import { CloudIcon, DropletIcon } from "../components/icons";
+import { Uptime } from "../components/uptime";
 
 Chart.register(...registerables);
 
@@ -104,7 +104,7 @@ export default function Home() {
 				<title>Cloudy | Weather station</title>
 			</Head>
 
-			<main className="m-auto grid h-full w-full grid-cols-2 gap-2 p-2 md:grid-cols-[0.8fr_1fr_1.2fr] lg:w-4/5 lg:grid-rows-[128px,_auto]">
+			<main className="m-auto grid h-full w-full grid-cols-1 grid-rows-[128px,_auto,_auto] gap-2 p-2 md:grid-cols-2 lg:grid-cols-[0.8fr_1fr_1.2fr] lg:grid-rows-[128px,_auto] xl:w-4/5">
 				<div
 					className={`light:text-background rounded bg-primary p-2 ${
 						current.timestamp === "" ? "animate-pulse" : ""
@@ -159,7 +159,7 @@ export default function Home() {
 						)}
 					</div>
 				</div>
-				<div className="col-span-2 row-span-1 ml-6 h-full lg:col-span-1 lg:row-span-2">
+				<div className="row-span-1 ml-0 h-full max-w-none p-4 md:col-span-2 lg:col-span-1 lg:row-span-2 lg:ml-6 lg:max-w-xl lg:p-0">
 					<h1 className="text-3xl">Device status</h1>
 					<div className="flex flex-col gap-2">
 						Average interval between updates is{" "}
@@ -174,11 +174,10 @@ export default function Home() {
 						</div>
 					</div>
 				</div>
-				<div className="col-span-2 pt-4">
+				<div className="col-span-1 row-span-2 p-4 md:col-span-2 md:row-span-1 lg:p-0 lg:pt-4">
 					{history?.length > 0 ? (
 						<Line
 							ref={chartRef}
-							className="h-full w-full"
 							data={{
 								labels: history.map((r) => new Date(r.timestamp).getTime()),
 								datasets: [
