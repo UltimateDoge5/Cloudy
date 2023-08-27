@@ -37,6 +37,8 @@ export default function Home() {
 
 	const subscriptionRef = useRef<RealtimeChannel | null>(null);
 
+	const styles = typeof window !== "undefined" ? getComputedStyle(document.documentElement) : undefined;
+
 	useEffect(() => {
 		const supabase = createClient<Database>(
 			process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -102,9 +104,9 @@ export default function Home() {
 				<title>Cloudy | Weather station</title>
 			</Head>
 
-			<main className="m-auto grid h-full w-4/5 grid-cols-1 grid-rows-[128px,_auto] gap-2 p-2 md:grid-cols-[0.8fr_1fr_1.2fr]">
+			<main className="m-auto grid h-full w-full grid-cols-2 gap-2 p-2 md:grid-cols-[0.8fr_1fr_1.2fr] lg:w-4/5 lg:grid-rows-[128px,_auto]">
 				<div
-					className={`rounded bg-primary p-2 text-background ${
+					className={`light:text-background rounded bg-primary p-2 ${
 						current.timestamp === "" ? "animate-pulse" : ""
 					}`}
 				>
@@ -132,11 +134,11 @@ export default function Home() {
 							<>
 								<DropletIcon className="h-6 w-6" />
 								<div>
-									<p className="text-right text-xs text-slate-600/60">Air humidity</p>
+									<p className="text-right text-xs text-text/60">Air humidity</p>
 									<span className="ml-2 text-2xl font-semibold">{current.humidity.toFixed(1)}</span> %
 								</div>
 								<div>
-									<p className="text-right text-xs text-slate-600/60">Dew point</p>
+									<p className="text-right text-xs text-text/60">Dew point</p>
 									<span className="ml-2 text-2xl font-semibold">
 										{calculateDewPoint(current.temperature, current.humidity).toFixed(1)}
 									</span>{" "}
@@ -150,15 +152,14 @@ export default function Home() {
 							<>
 								<CloudIcon className="h-6 w-6" />
 								<div className="w-fit">
-									<p className="text-right text-xs text-slate-600/60">Atmospheric pressure</p>
+									<p className="text-text-600/60 text-right text-xs">Atmospheric pressure</p>
 									<span className="ml-2 font-semibold">{current.pressure.toFixed(1)}</span> hPa
 								</div>
 							</>
 						)}
 					</div>
 				</div>
-
-				<div className="row-span-2 ml-6 h-full">
+				<div className="col-span-2 row-span-1 ml-6 h-full lg:col-span-1 lg:row-span-2">
 					<h1 className="text-3xl">Device status</h1>
 					<div className="flex flex-col gap-2">
 						Average interval between updates is{" "}
@@ -204,8 +205,9 @@ export default function Home() {
 								],
 							}}
 							options={{
+								responsive: true,
 								animation: false,
-								color: "#010905",
+								color: styles?.getPropertyValue("--color-text"),
 								elements: {
 									point: {
 										radius: 0,
@@ -220,16 +222,24 @@ export default function Home() {
 												hour: "HH:mm",
 											},
 										},
+										ticks: {
+											color: styles?.getPropertyValue("--color-text"),
+										},
+										grid: {
+											color: styles?.getPropertyValue("--color-text") + "20",
+										},
 									},
 									y: {
 										type: "linear",
 										display: scales.y,
 										position: "left",
 										grid: {
+											color: styles?.getPropertyValue("--color-text") + "20",
 											drawOnChartArea: false,
 										},
 										ticks: {
 											callback: (value) => value + "°C",
+											color: styles?.getPropertyValue("--color-text"),
 										},
 									},
 									y1: {
@@ -239,17 +249,23 @@ export default function Home() {
 										max: 100,
 										min: 0,
 										grid: {
+											color: styles?.getPropertyValue("--color-text") + "20",
 											drawOnChartArea: false,
 										},
 										ticks: {
 											callback: (value) => value + "%",
+											color: styles?.getPropertyValue("--color-text"),
 										},
 									},
 									y2: {
 										type: "linear",
 										display: scales.y2,
 										grid: {
+											color: styles?.getPropertyValue("--color-text") + "20",
 											drawOnChartArea: false,
+										},
+										ticks: {
+											color: styles?.getPropertyValue("--color-text"),
 										},
 									},
 								},
@@ -272,7 +288,7 @@ export default function Home() {
 							}}
 						/>
 					) : (
-						<div className="mt-2 h-52 w-full animate-pulse rounded bg-secondary/40" />
+						<div className="mt-2 h-52 w-full animate-pulse rounded bg-secondary/40 lg:h-96" />
 					)}
 				</div>
 			</main>

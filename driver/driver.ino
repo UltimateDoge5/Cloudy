@@ -26,6 +26,9 @@
 #define DATABASE_INTERVAL 20000
 #define SEALEVELPRESSURE_HPA (1013.25)
 
+#define DEBUG_LED true   // Set to true to enable the debug LED
+#define DEBUG_LED_PIN 13 // Onboard LED of the ESP32 dev board
+
 #define INTEGER_LIMIT 2147483647
 
 const char *ntpServer = "pool.ntp.org";
@@ -45,6 +48,8 @@ int screenTime = 0;
 void setup()
 {
   pinMode(WAKEUP_PIN, INPUT);
+  pinMode(DEBUG_LED_PIN, OUTPUT);
+
   Serial.begin(115200);
   I2CWire.begin(I2C_SDA, I2C_SCL, 100000);
 
@@ -182,6 +187,9 @@ void loop()
     display.println("Error while reading data");
     display.setTextSize(1);
     display.println("Please restart");
+#ifdef DEBUG_LED
+    digitalWrite(DEBUG_LED_PIN, HIGH);
+#endif
   }
   else
   {
@@ -211,11 +219,6 @@ void loop()
   display.drawBitmap(SCREEN_WIDTH - 32, SCREEN_HEIGHT - 32, logo, 32, 32, SH110X_WHITE);
   display.display();
 
-  if (digitalRead(WAKEUP_PIN) == HIGH)
-  {
-    Serial.println("Waking up");
-  }
-
   delay(500);
 }
 
@@ -227,6 +230,9 @@ void UploadData(void *pvParameters)
     if (temp == NULL || temp == INTEGER_LIMIT) // Avoid uploading invalid data
     {
       Serial.println("Error while reading data, skipping upload");
+#ifdef DEBUG_LED
+      digitalWrite(DEBUG_LED_PIN, HIGH);
+#endif
       delay(DATABASE_INTERVAL);
       return;
     }
@@ -250,10 +256,16 @@ void UploadData(void *pvParameters)
       Serial.println(http.errorToString(resp));
       Serial.println(http.getString());
       uploadError = "Error code " + String(resp);
+#ifdef DEBUG_LED
+      digitalWrite(DEBUG_LED_PIN, HIGH);
+#endif
     }
     else
     {
       uploadError = "";
+#ifdef DEBUG_LED
+      digitalWrite(DEBUG_LED_PIN, LOW);
+#endif
     }
 
     delay(DATABASE_INTERVAL);

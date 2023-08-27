@@ -15,6 +15,8 @@ const minsToHours = (mins: number) => {
 const labels = Array.from({ length: 48 }, (_, i) => minsToHours((i + 1) * 30)).reverse();
 labels[47] = "Now";
 
+const styles = typeof window !== "undefined" ? getComputedStyle(document.documentElement) : undefined;
+
 export const Uptime = ({ timestamps }: { timestamps: string[] }) => {
 	const uptime = useMemo(() => calculateDeviceUptime(timestamps), [timestamps]);
 	const chartRef = useRef<ChartJSOrUndefined<"bar", number[]> | undefined>(undefined);
@@ -32,6 +34,7 @@ export const Uptime = ({ timestamps }: { timestamps: string[] }) => {
 
 	return (
 		<Bar
+			className="h-full w-full"
 			ref={chartRef}
 			data={{
 				labels,
@@ -39,17 +42,33 @@ export const Uptime = ({ timestamps }: { timestamps: string[] }) => {
 					{
 						data: uptime,
 						label: "Received updates",
-						backgroundColor: "#2172ca",
+						backgroundColor: styles?.getPropertyValue("--color-accent"),
 					},
 				],
 			}}
 			options={{
-				color: "#010905",
+				responsive: true,
+				color: styles?.getPropertyValue("--color-text"),
+				borderColor: styles?.getPropertyValue("--color-text") + "20",
 				scales: {
+					x: {
+						ticks: {
+							color: styles?.getPropertyValue("--color-text"),
+						},
+						grid: {
+							color: styles?.getPropertyValue("--color-text") + "20",
+						},
+					},
 					y: {
 						position: "right",
 						beginAtZero: true,
 						max: 90,
+						ticks: {
+							color: styles?.getPropertyValue("--color-text"),
+						},
+						grid: {
+							color: styles?.getPropertyValue("--color-text") + "20",
+						},
 					},
 				},
 			}}
