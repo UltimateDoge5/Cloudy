@@ -106,13 +106,13 @@ export default function Home() {
 
 			<main className="m-auto grid h-full w-full grid-cols-1 grid-rows-[128px,_auto,_auto] gap-2 p-2 md:grid-cols-2 lg:grid-cols-[0.8fr_1fr_1.2fr] lg:grid-rows-[128px,_auto] xl:w-4/5">
 				<div
-					className={`light:text-background rounded bg-primary p-2 ${
+					className={`rounded bg-primary p-2 text-background dark:text-text ${
 						current.timestamp === "" ? "animate-pulse" : ""
 					}`}
 				>
 					{current.timestamp !== "" && (
 						<>
-							<span className="text-7xl font-semibold">{current.temperature.toFixed(1)}</span>
+							<span className=" text-7xl font-semibold">{current.temperature.toFixed(1)}</span>
 							<sup className="relative -top-6 text-4xl">°C</sup>
 							<p className="mt-2">
 								Last update was at
@@ -134,11 +134,11 @@ export default function Home() {
 							<>
 								<DropletIcon className="h-6 w-6" />
 								<div>
-									<p className="text-right text-xs text-text/60">Air humidity</p>
+									<p className="text-right text-xs text-text/90">Air humidity</p>
 									<span className="ml-2 text-2xl font-semibold">{current.humidity.toFixed(1)}</span> %
 								</div>
 								<div>
-									<p className="text-right text-xs text-text/60">Dew point</p>
+									<p className="text-right text-xs text-text/90">Dew point</p>
 									<span className="ml-2 text-2xl font-semibold">
 										{calculateDewPoint(current.temperature, current.humidity).toFixed(1)}
 									</span>{" "}
@@ -152,7 +152,7 @@ export default function Home() {
 							<>
 								<CloudIcon className="h-6 w-6" />
 								<div className="w-fit">
-									<p className="text-text-600/60 text-right text-xs">Atmospheric pressure</p>
+									<p className="text-right text-xs text-text/90">Atmospheric pressure</p>
 									<span className="ml-2 font-semibold">{current.pressure.toFixed(1)}</span> hPa
 								</div>
 							</>
@@ -174,7 +174,7 @@ export default function Home() {
 						</div>
 					</div>
 				</div>
-				<div className="col-span-1 row-span-2 p-4 md:col-span-2 md:row-span-1 lg:p-0 lg:pt-4">
+				<div className="col-span-1 row-span-2 min-h-[208px] p-4 md:col-span-2 md:row-span-1 lg:p-0 lg:pt-4">
 					{history?.length > 0 ? (
 						<Line
 							ref={chartRef}
@@ -246,7 +246,7 @@ export default function Home() {
 										position: "right",
 										display: scales.y1,
 										max: 100,
-										min: 0,
+										min: 10, // BME820 sensor has a minimum of 10% humidity
 										grid: {
 											color: styles?.getPropertyValue("--color-text") + "20",
 											drawOnChartArea: false,

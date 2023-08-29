@@ -3,22 +3,20 @@
 @tailwind utilities;
 
 @media (prefers-color-scheme: dark) {
-	@layer base {
-		:root {
-			/* Thats the tailwind syntax apparently */
-			--text: 211 248 230;
-			--background: 1 9 5;
-			--primary: 14 86 88;
-			--secondary: 4 15 27;
-			--accent: 150 193 238;
+	:root {
+		/* Thats the tailwind syntax apparently */
+		--text: 211 248 230;
+		--background: 1 9 5;
+		--primary: 14 86 88;
+		--secondary: 4 15 27;
+		--accent: 150 193 238;
 
-			/* Still need normal color syntax for charts */
-			--color-text: #d3f8e6;
-			--color-background: #010905;
-			--color-primary: #0e5658;
-			--color-secondary: #040f1b;
-			--color-accent: #96c1ee;
-		}
+		/* Still need normal color syntax for charts */
+		--color-text: #d3f8e6;
+		--color-background: #010905;
+		--color-primary: #0e5658;
+		--color-secondary: #040f1b;
+		--color-accent: #96c1ee;
 	}
 }
 
