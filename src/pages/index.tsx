@@ -9,6 +9,7 @@ import { ChartJSOrUndefined } from "react-chartjs-2/dist/types";
 import { Database } from "../../schema";
 import { CloudIcon, DropletIcon } from "../components/icons";
 import { Uptime } from "../components/uptime";
+import { MonthTemperatures } from "../components/monthTemps";
 
 Chart.register(...registerables);
 
@@ -104,7 +105,7 @@ export default function Home() {
 				<title>Cloudy | Weather station</title>
 			</Head>
 
-			<main className="m-auto grid h-full w-full grid-cols-1 grid-rows-[128px,_auto,_auto] gap-2 p-2 md:grid-cols-2 lg:grid-cols-[0.8fr_1fr_1.2fr] lg:grid-rows-[128px,_auto] xl:w-4/5">
+			<main className="m-auto grid h-full w-full grid-cols-1 grid-rows-[128px,_auto,_auto,_64px] gap-2 p-2 md:grid-cols-2 lg:grid-cols-[0.8fr_1fr_1.2fr] lg:grid-rows-[128px,_auto,_64px] xl:w-4/5">
 				<div
 					className={`rounded bg-primary p-2 text-background dark:text-text ${
 						current.timestamp === "" ? "animate-pulse" : ""
@@ -112,7 +113,7 @@ export default function Home() {
 				>
 					{current.timestamp !== "" && (
 						<>
-							<span className=" text-7xl font-semibold">{current.temperature.toFixed(1)}</span>
+							<span className="text-7xl font-semibold">{current.temperature.toFixed(1)}</span>
 							<sup className="relative -top-6 text-4xl">°C</sup>
 							<p className="mt-2">
 								Last update was at
@@ -129,7 +130,7 @@ export default function Home() {
 					)}
 				</div>
 				<div className="grid grid-rows-2 gap-2">
-					<div className="flex items-center gap-2 rounded bg-secondary/70 p-2 shadow-inner">
+					<div className="flex items-center gap-2 rounded bg-secondary p-2 shadow-inner">
 						{current.timestamp !== "" && (
 							<>
 								<DropletIcon className="h-6 w-6" />
@@ -281,7 +282,6 @@ export default function Home() {
 									decimation: {
 										enabled: true,
 										algorithm: "lttb",
-										samples: 100,
 									},
 								},
 							}}
@@ -289,6 +289,10 @@ export default function Home() {
 					) : (
 						<div className="mt-2 h-52 w-full animate-pulse rounded bg-secondary/40 lg:h-96" />
 					)}
+				</div>
+				<div className="col-span-1">
+					<h3 className="mb-2 font-thin text-text/80">Current month records</h3>
+					<MonthTemperatures currentTemp={current.temperature} />
 				</div>
 			</main>
 		</>
