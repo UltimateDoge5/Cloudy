@@ -3,7 +3,7 @@ import { Chart, registerables } from "chart.js";
 import "chartjs-adapter-dayjs-4/dist/chartjs-adapter-dayjs-4.esm.js";
 import dayjs from "dayjs";
 import Head from "next/head";
-import { useEffect, useReducer, useRef, useState } from "react";
+import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { Line } from "react-chartjs-2";
 import { ChartJSOrUndefined } from "react-chartjs-2/dist/types";
 import { Database } from "../../schema";
@@ -14,14 +14,18 @@ import { MonthTemperatures } from "../components/monthTemps";
 Chart.register(...registerables);
 
 export default function Home() {
-	const [current, setCurrent] = useReducer((prev: Row, next: Partial<Row>) => ({ ...prev, ...next }), {
-		temperature: 0,
-		pressure: 0,
-		humidity: 0,
-		timestamp: "",
-	});
+	const [current, setCurrent] = useReducer(
+		(prev: Omit<Row, "id">, next: Partial<Omit<Row, "id">>) => ({ ...prev, ...next }),
+		{
+			temperature: 0,
+			pressure: 0,
+			humidity: 0,
+			timestamp: "",
+		},
+	);
 
 	const [history, setHistory] = useState<Row[]>([]);
+	const gappedHistory = useMemo(() => visualizeIDGaps(history), [history]);
 	const [scales, setScales] = useReducer(
 		(prev: Scales, next: Partial<Scales>) => ({
 			...prev,
@@ -34,7 +38,7 @@ export default function Home() {
 		},
 	);
 
-	const chartRef = useRef<ChartJSOrUndefined<"line", string[], number> | undefined>(undefined);
+	const chartRef = useRef<ChartJSOrUndefined<"line", (string | undefined)[], number>>(undefined);
 
 	const subscriptionRef = useRef<RealtimeChannel | null>(null);
 
@@ -56,11 +60,11 @@ export default function Home() {
 
 		void supabase
 			.from("weather")
-			.select("temperature, pressure,humidity, timestamp")
+			.select("id, temperature, pressure, humidity, timestamp")
 			.order("id", { ascending: true })
 			// Show only last 24 hours
 			.gt("timestamp", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
-			.then(({ data }) => setHistory(data!));
+			.then(({ data }) => setHistory(data ?? []));
 
 		subscriptionRef.current = supabase
 			.channel("table-db-changes")
@@ -90,14 +94,18 @@ export default function Home() {
 	// Perform the update of the chart manually
 	// The component param one causes flashing
 	useEffect(() => {
-		if (chartRef.current) {
-			chartRef.current.data.labels = history.map((r) => new Date(r.timestamp).getTime());
-			chartRef.current.data.datasets[0].data = history.map((r) => r.temperature.toFixed(2));
-			chartRef.current.data.datasets[1].data = history.map((r) => r.humidity.toFixed(2));
-			chartRef.current.data.datasets[2].data = history.map((r) => r.pressure.toFixed(2));
+		if (
+			chartRef.current &&
+			gappedHistory.length > 0 &&
+			chartRef.current.data.labels?.slice(-1)[0] !== new Date(gappedHistory.slice(-1)[0].timestamp).getTime() // Prevents unnecessary updates
+		) {
+			chartRef.current.data.labels = gappedHistory.map((r) => new Date(r.timestamp).getTime());
+			chartRef.current.data.datasets[0].data = gappedHistory.map((r) => r.temperature?.toFixed(2));
+			chartRef.current.data.datasets[1].data = gappedHistory.map((r) => r.humidity?.toFixed(2));
+			chartRef.current.data.datasets[2].data = gappedHistory.map((r) => r.pressure?.toFixed(2));
 			chartRef.current.update();
 		}
-	}, [history]);
+	}, [gappedHistory]);
 
 	return (
 		<>
@@ -105,7 +113,7 @@ export default function Home() {
 				<title>Cloudy | Weather station</title>
 			</Head>
 
-			<main className="m-auto grid h-full w-full grid-cols-1 grid-rows-[128px,_auto,_auto,_64px] gap-2 p-2 md:grid-cols-2 lg:grid-cols-[0.8fr_1fr_1.2fr] lg:grid-rows-[128px,_auto,_64px] xl:w-4/5">
+			<main className="m-auto grid h-full w-full grid-cols-1 grid-rows-[128px,_auto,_auto,_96px] gap-2 p-2 md:grid-cols-2 lg:grid-cols-[0.8fr_1fr_1.2fr] lg:grid-rows-[128px,_auto,_96px] xl:w-4/5">
 				<div
 					className={`rounded bg-primary p-2 text-background dark:text-text ${
 						current.timestamp === "" ? "animate-pulse" : ""
@@ -130,7 +138,11 @@ export default function Home() {
 					)}
 				</div>
 				<div className="grid grid-rows-2 gap-2">
-					<div className="flex items-center gap-2 rounded bg-secondary p-2 shadow-inner">
+					<div
+						className={`flex items-center gap-2 rounded bg-secondary p-2 shadow-inner ${
+							current.timestamp === "" ? "animate-pulse" : ""
+						}`}
+					>
 						{current.timestamp !== "" && (
 							<>
 								<DropletIcon className="h-6 w-6" />
@@ -148,7 +160,11 @@ export default function Home() {
 							</>
 						)}
 					</div>
-					<div className="flex items-center gap-2 rounded bg-secondary p-2 text-2xl shadow-inner">
+					<div
+						className={`flex items-center gap-2 rounded bg-secondary p-2 text-2xl shadow-inner ${
+							current.timestamp === "" ? "animate-pulse" : ""
+						}`}
+					>
 						{current.timestamp !== "" && (
 							<>
 								<CloudIcon className="h-6 w-6" />
@@ -175,28 +191,28 @@ export default function Home() {
 						</div>
 					</div>
 				</div>
-				<div className="col-span-1 row-span-2 min-h-[208px] p-4 md:col-span-2 md:row-span-1 lg:p-0 lg:pt-4">
+				<div className="col-span-1 row-span-2 p-4 md:col-span-2 md:row-span-1 lg:p-0 lg:pt-4 xl:min-h-[356px]">
 					{history?.length > 0 ? (
 						<Line
 							ref={chartRef}
 							data={{
-								labels: history.map((r) => new Date(r.timestamp).getTime()),
+								labels: gappedHistory.map((r) => new Date(r.timestamp).getTime()),
 								datasets: [
 									{
-										data: history.map((r) => r.temperature.toFixed(2)),
+										data: gappedHistory.map((r) => r.temperature?.toFixed(2)),
 										label: "Temperature",
 										tension: 0.1,
 										hidden: !scales.y,
 									},
 									{
-										data: history.map((r) => r.humidity.toFixed(2)),
+										data: gappedHistory.map((r) => r.humidity?.toFixed(2)),
 										label: "Humidity",
 										yAxisID: "y1",
 										tension: 0.1,
 										hidden: !scales.y1,
 									},
 									{
-										data: history.map((r) => r.pressure.toFixed(2)),
+										data: gappedHistory.map((r) => r.pressure?.toFixed(2)),
 										label: "Pressure",
 										yAxisID: "y2",
 										tension: 0.1,
@@ -287,17 +303,51 @@ export default function Home() {
 							}}
 						/>
 					) : (
-						<div className="mt-2 h-52 w-full animate-pulse rounded bg-secondary/40 lg:h-96" />
+						<div className="h-52 w-full animate-pulse rounded bg-secondary/40 dark:bg-secondary/80 lg:h-96 xl:h-[356px]" />
 					)}
 				</div>
 				<div className="col-span-1">
 					<h3 className="mb-2 font-thin text-text/80">Current month records</h3>
-					<MonthTemperatures currentTemp={current.temperature} />
+					<MonthTemperatures currentTemp={current.temperature} history={history} />
 				</div>
 			</main>
 		</>
 	);
 }
+
+/**
+ * Sometimes the data gets manually deleted from the database
+ * This function visualizes the gaps made by the missing data\
+ * By adding fake null data with predicted timestamps
+ */
+const visualizeIDGaps = (rows: Row[]) => {
+	const gaps: GapRow[] = [];
+	const avgInterval = calcAvgInterval(rows.map((r) => r.timestamp));
+
+	for (let i = 0; i < rows.length; i++) {
+		if (i === 0) {
+			gaps.push(rows[i]);
+			continue;
+		}
+
+		const diff = rows[i].id - rows[i - 1].id;
+		if (diff > 1) {
+			for (let j = 0; j < diff - 1; j++) {
+				gaps.push({
+					id: rows[i - 1].id + j + 1,
+					temperature: undefined,
+					pressure: undefined,
+					humidity: undefined,
+					timestamp: new Date(
+						new Date(rows[i - 1].timestamp).getTime() + avgInterval * (j + 1),
+					).toISOString(),
+				});
+			}
+		}
+		gaps.push(rows[i]);
+	}
+	return gaps;
+};
 
 const calcAvgInterval = (timestamps: string[]) => {
 	let sum = 0;
@@ -315,7 +365,16 @@ const calculateDewPoint = (temperature: number, humidity: number) => {
 	return (b * t) / (a - t);
 };
 
+interface GapRow {
+	id: number;
+	temperature: number | undefined;
+	pressure: number | undefined;
+	humidity: number | undefined;
+	timestamp: string;
+}
+
 interface Row {
+	id: number;
 	temperature: number;
 	pressure: number;
 	humidity: number;

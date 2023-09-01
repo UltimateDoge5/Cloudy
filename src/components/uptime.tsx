@@ -30,7 +30,8 @@ export const Uptime = ({ timestamps }: { timestamps: string[] }) => {
 		}
 	}, [uptime]);
 
-	if (timestamps.length === 0) return <div className="mt-2 h-52 w-full animate-pulse rounded bg-secondary/40" />;
+	if (timestamps.length === 0)
+		return <div className="mt-2 h-52 w-full animate-pulse rounded bg-secondary/40 dark:bg-secondary/80" />;
 
 	return (
 		<Bar
