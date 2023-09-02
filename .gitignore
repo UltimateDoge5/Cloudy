@@ -42,4 +42,8 @@ next-env.d.ts
 driver/build
 driver/envs.h
 
+# KiCad schematics
+schematics/*
+!schematics/station.kicad*
+
 c_cpp_properties.json

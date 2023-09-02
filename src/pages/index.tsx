@@ -263,7 +263,7 @@ export default function Home() {
 										position: "right",
 										display: scales.y1,
 										max: 100,
-										min: 10, // BME820 sensor has a minimum of 10% humidity
+										min: 10, // BME280 sensor has a minimum of 10% humidity
 										grid: {
 											color: styles?.getPropertyValue("--color-text") + "20",
 											drawOnChartArea: false,
