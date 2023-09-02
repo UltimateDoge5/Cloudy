@@ -41,9 +41,9 @@ next-env.d.ts
 # arduino driver
 driver/build
 driver/envs.h
+c_cpp_properties.json
 
 # KiCad schematics
 schematics/*
 !schematics/station.kicad*
-
-c_cpp_properties.json
+!schematics/schematic.png
