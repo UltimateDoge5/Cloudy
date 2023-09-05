@@ -123,7 +123,7 @@
   (net 45 "unconnected-(J1-RX1+-PadB11)")
   (net 46 "/SDA")
   (net 47 "/SDL")
-  (net 48 "unconnected-(U4-NC-Pad4)")
+  (net 48 "unconnected-(U2-NC-Pad4)")
 
   (footprint "Capacitor_SMD:C_0805_2012Metric_Pad1.18x1.45mm_HandSolder" (layer "F.Cu")
     (tstamp 0bcfa749-c3c6-427e-af05-ad2e715224cf)
@@ -840,7 +840,7 @@
     (property "ki_keywords" "linear regulator ldo fixed positive")
     (path "/a6b00620-d58c-470d-84f5-f31a792486c3")
     (attr smd)
-    (fp_text reference "U4" (at 0 -2.4) (layer "F.SilkS") hide
+    (fp_text reference "U2" (at 0 -2.4) (layer "F.SilkS") hide
         (effects (font (size 1 1) (thickness 0.15)))
       (tstamp 3e9fa309-2170-4058-a5b1-c8b448c48232)
     )
@@ -885,7 +885,7 @@
     (pad "3" smd roundrect (at -1.1375 0.95 180) (size 1.325 0.6) (layers "F.Cu" "F.Paste" "F.Mask") (roundrect_rratio 0.25)
       (net 28 "+5V") (pinfunction "EN") (pintype "input") (tstamp fa7a99ca-0a69-46b1-a542-489280f4c8e0))
     (pad "4" smd roundrect (at 1.1375 0.95 180) (size 1.325 0.6) (layers "F.Cu" "F.Paste" "F.Mask") (roundrect_rratio 0.25)
-      (net 48 "unconnected-(U4-NC-Pad4)") (pinfunction "NC") (pintype "no_connect") (tstamp 02618a6c-d4df-48fd-993d-a6affb7dbbf3))
+      (net 48 "unconnected-(U2-NC-Pad4)") (pinfunction "NC") (pintype "no_connect") (tstamp 02618a6c-d4df-48fd-993d-a6affb7dbbf3))
     (pad "5" smd roundrect (at 1.1375 -0.95 180) (size 1.325 0.6) (layers "F.Cu" "F.Paste" "F.Mask") (roundrect_rratio 0.25)
       (net 2 "+3.3V") (pinfunction "VOUT") (pintype "power_out") (tstamp f001d584-9178-4f41-8d03-56773af5aaa4))
     (model "${KICAD6_3DMODEL_DIR}/Package_TO_SOT_SMD.3dshapes/SOT-23-5.wrl"

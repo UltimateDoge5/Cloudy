@@ -4,16 +4,7 @@ import { type Database } from "../../schema";
 import { ArrowDownIconSolid, ArrowUpIconSolid } from "./icons";
 import dayjs from "dayjs";
 
-export const MonthTemperatures = ({
-	history,
-	currentTemp,
-}: {
-	history: {
-		temperature: number;
-		timestamp: string;
-	}[];
-	currentTemp: number;
-}) => {
+export const MonthTemperatures = ({ currentTemp }: { currentTemp: number }) => {
 	const [error, setError] = useState(false);
 	const [monthTemps, setMonthTemps] = useReducer(
 		(prev: MonthTemps, next: Partial<MonthTemps>) => ({ ...prev, ...next }),
@@ -65,13 +56,14 @@ export const MonthTemperatures = ({
 
 	useEffect(() => {
 		if (currentTemp > monthTemps.highest) {
-			setMonthTemps({ highest: currentTemp });
+			setMonthTemps({ highest: currentTemp, highestDate: new Date().toISOString() });
 		} else if (currentTemp < monthTemps.lowest) {
-			setMonthTemps({ lowest: currentTemp });
+			setMonthTemps({ lowest: currentTemp, lowestDate: new Date().toISOString() });
 		}
 	}, [currentTemp]);
 
-	if (monthTemps.highest === -256 && history) return <div className="animate-pulse rounded bg-secondary p-2" />;
+	if (monthTemps.highest === monthTemps.lowest)
+		return <div className="h-3/4 animate-pulse rounded bg-secondary p-2" />;
 	if (error)
 		return (
 			<div className="my-auto flex h-full items-center rounded bg-red-400 p-2 text-xl text-red-800 dark:bg-red-300">

@@ -1,5 +1,19 @@
 import { RealtimeChannel, createClient } from "@supabase/supabase-js";
-import { Chart, registerables } from "chart.js";
+import {
+	BarController,
+	BarElement,
+	CategoryScale,
+	Chart,
+	Colors,
+	Decimation,
+	Legend,
+	LineController,
+	LineElement,
+	LinearScale,
+	PointElement,
+	TimeSeriesScale,
+	Tooltip,
+} from "chart.js";
 import "chartjs-adapter-dayjs-4/dist/chartjs-adapter-dayjs-4.esm.js";
 import dayjs from "dayjs";
 import Head from "next/head";
@@ -8,10 +22,23 @@ import { Line } from "react-chartjs-2";
 import { ChartJSOrUndefined } from "react-chartjs-2/dist/types";
 import { Database } from "../../schema";
 import { CloudIcon, DropletIcon } from "../components/icons";
-import { Uptime } from "../components/uptime";
 import { MonthTemperatures } from "../components/monthTemps";
+import { Uptime } from "../components/uptime";
 
-Chart.register(...registerables);
+Chart.register(
+	BarController,
+	BarElement,
+	LineController,
+	LineElement,
+	LinearScale,
+	CategoryScale,
+	PointElement,
+	TimeSeriesScale,
+	Decimation,
+	Tooltip,
+	Legend,
+	Colors,
+);
 
 export default function Home() {
 	const [current, setCurrent] = useReducer(
@@ -183,7 +210,10 @@ export default function Home() {
 						{history.length > 0 && (calcAvgInterval(history.map((r) => r.timestamp)) / 1000).toFixed(2)}{" "}
 						seconds
 						<div>
-							<span className="font-semibold">{history.length}</span> records in the last 24 hours
+							<span className="font-semibold">
+								{history.filter((r) => r.temperature !== null).length}
+							</span>{" "}
+							records in the last 24 hours
 						</div>
 						<div className="relative top-6">
 							<h2 className="text-xl">Uptime in the last 24 hours</h2>
@@ -308,7 +338,7 @@ export default function Home() {
 				</div>
 				<div className="col-span-1">
 					<h3 className="mb-2 font-thin text-text/80">Current month records</h3>
-					<MonthTemperatures currentTemp={current.temperature} history={history} />
+					<MonthTemperatures currentTemp={current.temperature} />
 				</div>
 			</main>
 		</>

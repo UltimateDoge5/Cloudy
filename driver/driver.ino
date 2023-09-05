@@ -150,35 +150,11 @@ void loop()
   // After 10s of inactivity, display the screen saver
   if (screenTime >= 10000)
   {
-    int x = random(0, SCREEN_WIDTH - 32);
-    int y = random(0, SCREEN_HEIGHT - 32);
-
-    int vx = random(-2, 2);
-    int vy = random(-2, 2);
-
-    // Animate until button a press
+    display.clearDisplay();
     while (digitalRead(WAKEUP_PIN) == LOW)
     {
-      display.clearDisplay();
-      display.drawBitmap(x, y, logo, 32, 32, SH110X_WHITE);
-      display.display();
-
-      x += vx;
-      y += vy;
-
-      if (x < 0 || x > SCREEN_WIDTH - 32)
-      {
-        vx *= -1;
-      }
-
-      if (y < 0 || y > SCREEN_HEIGHT - 32)
-      {
-        vy *= -1;
-      }
-
-      delay(50);
+      // Clear the screen and wait for the button to be pressed
     }
-
     screenTime = 0;
   }
 

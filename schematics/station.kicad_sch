@@ -2245,7 +2245,7 @@
   (symbol (lib_id "Regulator_Linear:AP2112K-3.3") (at 110.49 119.38 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid a6b00620-d58c-470d-84f5-f31a792486c3)
-    (property "Reference" "U4" (at 110.49 110.49 0)
+    (property "Reference" "U2" (at 110.49 110.49 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Value" "AP2112K-3.3" (at 110.49 113.03 0)
@@ -2265,7 +2265,7 @@
     (instances
       (project "station"
         (path "/85aeb712-90fa-4269-bdea-e9fbee3a2d37"
-          (reference "U4") (unit 1)
+          (reference "U2") (unit 1)
         )
       )
     )
