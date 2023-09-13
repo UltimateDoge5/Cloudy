@@ -51,8 +51,9 @@ export default function Home() {
 		},
 	);
 
-	const [history, setHistory] = useState<Row[]>([]);
-	const gappedHistory = useMemo(() => visualizeIDGaps(history), [history]);
+	const [dayHistory, setDayHistory] = useState<Row[]>([]);
+	const historyWithGaps = useMemo(() => visualizeIDGaps(dayHistory), [dayHistory]);
+
 	const [scales, setScales] = useReducer(
 		(prev: Scales, next: Partial<Scales>) => ({
 			...prev,
@@ -66,7 +67,6 @@ export default function Home() {
 	);
 
 	const chartRef = useRef<ChartJSOrUndefined<"line", (string | undefined)[], number>>(undefined);
-
 	const subscriptionRef = useRef<RealtimeChannel | null>(null);
 
 	const styles = typeof window !== "undefined" ? getComputedStyle(document.documentElement) : undefined;
@@ -91,7 +91,10 @@ export default function Home() {
 			.order("id", { ascending: true })
 			// Show only last 24 hours
 			.gt("timestamp", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
-			.then(({ data }) => setHistory(data ?? []));
+			.then(({ data, error }) => {
+				if (error) console.error(error);
+				setDayHistory(data ?? []);
+			});
 
 		subscriptionRef.current = supabase
 			.channel("table-db-changes")
@@ -104,7 +107,7 @@ export default function Home() {
 				},
 				(payload) => {
 					const row = payload.new as Row;
-					setHistory((prev) => [
+					setDayHistory((prev) => [
 						...prev.filter((r) => dayjs(r.timestamp).isAfter(dayjs().subtract(24, "hour"))),
 						row,
 					]);
@@ -121,18 +124,14 @@ export default function Home() {
 	// Perform the update of the chart manually
 	// The component param one causes flashing
 	useEffect(() => {
-		if (
-			chartRef.current &&
-			gappedHistory.length > 0 &&
-			chartRef.current.data.labels?.slice(-1)[0] !== new Date(gappedHistory.slice(-1)[0].timestamp).getTime() // Prevents unnecessary updates
-		) {
-			chartRef.current.data.labels = gappedHistory.map((r) => new Date(r.timestamp).getTime());
-			chartRef.current.data.datasets[0].data = gappedHistory.map((r) => r.temperature?.toFixed(2));
-			chartRef.current.data.datasets[1].data = gappedHistory.map((r) => r.humidity?.toFixed(2));
-			chartRef.current.data.datasets[2].data = gappedHistory.map((r) => r.pressure?.toFixed(2));
+		if (chartRef.current && historyWithGaps.length > 0) {
+			chartRef.current.data.labels = historyWithGaps.map((r) => new Date(r.timestamp).getTime());
+			chartRef.current.data.datasets[0].data = historyWithGaps.map((r) => r.temperature?.toFixed(2));
+			chartRef.current.data.datasets[1].data = historyWithGaps.map((r) => r.humidity?.toFixed(2));
+			chartRef.current.data.datasets[2].data = historyWithGaps.map((r) => r.pressure?.toFixed(2));
 			chartRef.current.update();
 		}
-	}, [gappedHistory]);
+	}, [historyWithGaps]);
 
 	return (
 		<>
@@ -140,7 +139,7 @@ export default function Home() {
 				<title>Cloudy | Weather station</title>
 			</Head>
 
-			<main className="m-auto grid h-full w-full grid-cols-1 grid-rows-[128px,_auto,_auto,_96px] gap-2 p-2 md:grid-cols-2 lg:grid-cols-[0.8fr_1fr_1.2fr] lg:grid-rows-[128px,_auto,_96px] xl:w-4/5">
+			<main className="m-auto grid h-full w-full grid-cols-1 grid-rows-[128px,_128px,_256px,_256px,_128px] gap-2 p-2 md:grid-cols-2 md:grid-rows-[128px,auto,auto,128px] lg:grid-cols-[0.9fr_1fr_1.1fr] lg:grid-rows-[128px,1fr,_128px] xl:w-4/5">
 				<div
 					className={`rounded bg-primary p-2 text-background dark:text-text ${
 						current.timestamp === "" ? "animate-pulse" : ""
@@ -203,46 +202,46 @@ export default function Home() {
 						)}
 					</div>
 				</div>
-				<div className="row-span-1 ml-0 h-full max-w-none p-4 md:col-span-2 lg:col-span-1 lg:row-span-2 lg:ml-6 lg:max-w-xl lg:p-0">
+				<div className="ml-6 hidden lg:block">
 					<h1 className="text-3xl">Device status</h1>
 					<div className="flex flex-col gap-2">
 						Average interval between updates is{" "}
-						{history.length > 0 && (calcAvgInterval(history.map((r) => r.timestamp)) / 1000).toFixed(2)}{" "}
+						{dayHistory.length > 0 &&
+							(calcAvgInterval(dayHistory.map((r) => r.timestamp)) / 1000).toFixed(2)}{" "}
 						seconds
 						<div>
 							<span className="font-semibold">
-								{history.filter((r) => r.temperature !== null).length}
+								{dayHistory.filter((r) => r.temperature !== null).length}
 							</span>{" "}
 							records in the last 24 hours
 						</div>
-						<div className="relative top-6">
-							<h2 className="text-xl">Uptime in the last 24 hours</h2>
-							<Uptime timestamps={history.map((r) => r.timestamp)} />
-						</div>
 					</div>
 				</div>
-				<div className="col-span-1 row-span-2 p-4 md:col-span-2 md:row-span-1 lg:p-0 lg:pt-4 xl:min-h-[356px]">
-					{history?.length > 0 ? (
+
+				<div className="col-span-1 row-span-1 p-4 md:col-span-2 md:row-span-1 lg:p-0 lg:pt-4 xl:min-h-[356px]">
+					<h3 className="mb-2 dark:text-text/80">Last 24h graph</h3>
+
+					{dayHistory?.length > 0 ? (
 						<Line
 							ref={chartRef}
 							data={{
-								labels: gappedHistory.map((r) => new Date(r.timestamp).getTime()),
+								labels: historyWithGaps.map((r) => new Date(r.timestamp).getTime()),
 								datasets: [
 									{
-										data: gappedHistory.map((r) => r.temperature?.toFixed(2)),
+										data: historyWithGaps.map((r) => r.temperature?.toFixed(2)),
 										label: "Temperature",
 										tension: 0.1,
 										hidden: !scales.y,
 									},
 									{
-										data: gappedHistory.map((r) => r.humidity?.toFixed(2)),
+										data: historyWithGaps.map((r) => r.humidity?.toFixed(2)),
 										label: "Humidity",
 										yAxisID: "y1",
 										tension: 0.1,
 										hidden: !scales.y1,
 									},
 									{
-										data: gappedHistory.map((r) => r.pressure?.toFixed(2)),
+										data: historyWithGaps.map((r) => r.pressure?.toFixed(2)),
 										label: "Pressure",
 										yAxisID: "y2",
 										tension: 0.1,
@@ -293,7 +292,7 @@ export default function Home() {
 										position: "right",
 										display: scales.y1,
 										max: 100,
-										min: 10, // BME280 sensor has a minimum of 10% humidity
+										min: 0,
 										grid: {
 											color: styles?.getPropertyValue("--color-text") + "20",
 											drawOnChartArea: false,
@@ -336,8 +335,12 @@ export default function Home() {
 						<div className="h-52 w-full animate-pulse rounded bg-secondary/40 dark:bg-secondary/80 lg:h-96 xl:h-[356px]" />
 					)}
 				</div>
+				<div className="col-span-1 row-span-1 m-0 max-w-none px-4 md:col-span-2 lg:col-span-1 lg:ml-6 lg:max-w-md lg:p-0 lg:pt-4 xl:max-w-lg">
+					<h2 className="mb-2 dark:text-text/80">Uptime in the last 24 hours</h2>
+					<Uptime timestamps={dayHistory.map((r) => r.timestamp)} />
+				</div>
 				<div className="col-span-1">
-					<h3 className="mb-2 font-thin text-text/80">Current month records</h3>
+					<h3 className="mb-2 dark:font-light dark:text-text/80">Current month records</h3>
 					<MonthTemperatures currentTemp={current.temperature} />
 				</div>
 			</main>
@@ -403,7 +406,7 @@ interface GapRow {
 	timestamp: string;
 }
 
-interface Row {
+export interface Row {
 	id: number;
 	temperature: number;
 	pressure: number;

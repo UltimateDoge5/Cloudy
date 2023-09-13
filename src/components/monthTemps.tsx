@@ -62,7 +62,7 @@ export const MonthTemperatures = ({ currentTemp }: { currentTemp: number }) => {
 		}
 	}, [currentTemp]);
 
-	if (monthTemps.highest === monthTemps.lowest)
+	if (monthTemps.highest === monthTemps.lowest || monthTemps.highest === -256)
 		return <div className="h-3/4 animate-pulse rounded bg-secondary p-2" />;
 	if (error)
 		return (
@@ -72,7 +72,7 @@ export const MonthTemperatures = ({ currentTemp }: { currentTemp: number }) => {
 		);
 
 	return (
-		<div className="grid grid-cols-2 items-center divide-x divide-white/30 rounded bg-secondary p-2 shadow-inner">
+		<div className="grid grid-cols-2 items-center divide-x divide-black/30 rounded bg-secondary p-2 shadow-inner dark:divide-white/30">
 			<div className="flex items-center">
 				<ArrowUpIconSolid className="h-8 w-8" />
 				<div>
