@@ -52,7 +52,7 @@ export default function Home() {
 	);
 
 	const [dayHistory, setDayHistory] = useState<Row[]>([]);
-	const historyWithGaps = useMemo(() => visualizeIDGaps(dayHistory), [dayHistory]);
+	const historyWithGaps = useMemo(() => visualizeTimeGaps(visualizeIDGaps(dayHistory)), [dayHistory]);
 
 	const [scales, setScales] = useReducer(
 		(prev: Scales, next: Partial<Scales>) => ({
@@ -69,6 +69,7 @@ export default function Home() {
 	const chartRef = useRef<ChartJSOrUndefined<"line", (string | undefined)[], number>>(undefined);
 	const subscriptionRef = useRef<RealtimeChannel | null>(null);
 
+	const dataPointPercent = dayHistory.filter((r) => r.temperature !== null).length / 4320;
 	const styles = typeof window !== "undefined" ? getComputedStyle(document.documentElement) : undefined;
 
 	useEffect(() => {
@@ -211,9 +212,10 @@ export default function Home() {
 						seconds
 						<div>
 							<span className="font-semibold">
-								{dayHistory.filter((r) => r.temperature !== null).length}
-							</span>{" "}
-							records in the last 24 hours
+								{dayHistory.filter((r) => r.temperature !== null).length} {"("}
+								{(dataPointPercent * 100).toFixed(2)}%{") "}
+							</span>
+							datapoints in the last 24 hours
 						</div>
 					</div>
 				</div>
@@ -374,6 +376,42 @@ const visualizeIDGaps = (rows: Row[]) => {
 					timestamp: new Date(
 						new Date(rows[i - 1].timestamp).getTime() + avgInterval * (j + 1),
 					).toISOString(),
+				});
+			}
+		}
+		gaps.push(rows[i]);
+	}
+	return gaps;
+};
+
+/**
+ * Vizualize gaps between timestamps by calculating the average interval
+ * By adding fake null data with predicted timestamps using the interval
+ */
+const visualizeTimeGaps = (rows: GapRow[]) => {
+	const gaps: GapRow[] = [];
+	const avgInterval = calcAvgInterval(rows.map((r) => r.timestamp));
+
+	for (let i = 0; i < rows.length; i++) {
+		if (i === 0) {
+			gaps.push(rows[i]);
+			continue;
+		}
+
+		const diff = dayjs(rows[i].timestamp).diff(dayjs(rows[i - 1].timestamp), "millisecond");
+		if (diff > avgInterval * 1.5) {
+			const numGaps = Math.floor(diff / avgInterval);
+			for (let j = 0; j < numGaps; j++) {
+				gaps.push({
+					// The ids won't be correct at this point, as for sure there will be duplicates
+					// But at this stage they are not needed
+					id: rows[i - 1].id + j + 1,
+					temperature: undefined,
+					pressure: undefined,
+					humidity: undefined,
+					timestamp: dayjs(rows[i - 1].timestamp)
+						.add(avgInterval * (j + 1), "millisecond")
+						.toISOString(),
 				});
 			}
 		}
