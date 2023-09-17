@@ -24,6 +24,7 @@ import { Database } from "../../schema";
 import { CloudIcon, DropletIcon } from "../components/icons";
 import { MonthTemperatures } from "../components/monthTemps";
 import { Uptime } from "../components/uptime";
+import { Switch } from "@headlessui/react";
 
 Chart.register(
 	BarController,
@@ -50,6 +51,8 @@ export default function Home() {
 			timestamp: "",
 		},
 	);
+
+	const [gapsEnabled, setGapsEnabled] = useState(true);
 
 	const [dayHistory, setDayHistory] = useState<Row[]>([]);
 	const historyWithGaps = useMemo(() => visualizeTimeGaps(visualizeIDGaps(dayHistory)), [dayHistory]);
@@ -221,29 +224,56 @@ export default function Home() {
 				</div>
 
 				<div className="col-span-1 row-span-1 p-4 md:col-span-2 md:row-span-1 lg:p-0 lg:pt-4 xl:min-h-[356px]">
-					<h3 className="mb-2 dark:text-text/80">Last 24h graph</h3>
+					<div className="mb-2 flex items-center justify-between">
+						<h3 className=" dark:text-text/80">Last 24h graph</h3>
+						<Switch.Group>
+							<div className="flex items-center">
+								<Switch.Label className="mr-4 dark:text-text/80">Enable time gaps</Switch.Label>
+								<Switch
+									checked={gapsEnabled}
+									onChange={setGapsEnabled}
+									className={`${gapsEnabled ? "bg-primary" : "bg-secondary"}
+         								relative inline-flex h-6 w-11 items-center rounded-full`}
+								>
+									<span
+										className={`${
+											gapsEnabled ? "translate-x-6" : "translate-x-1"
+										} inline-block h-4 w-4 transform rounded-full bg-white transition `}
+									/>
+								</Switch>
+							</div>
+						</Switch.Group>
+					</div>
 
 					{dayHistory?.length > 0 ? (
 						<Line
 							ref={chartRef}
 							data={{
-								labels: historyWithGaps.map((r) => new Date(r.timestamp).getTime()),
+								labels: (gapsEnabled ? historyWithGaps : dayHistory).map((r) =>
+									new Date(r.timestamp).getTime(),
+								),
 								datasets: [
 									{
-										data: historyWithGaps.map((r) => r.temperature?.toFixed(2)),
+										data: (gapsEnabled ? historyWithGaps : dayHistory).map(
+											(r) => r.temperature?.toFixed(2),
+										),
 										label: "Temperature",
 										tension: 0.1,
 										hidden: !scales.y,
 									},
 									{
-										data: historyWithGaps.map((r) => r.humidity?.toFixed(2)),
+										data: (gapsEnabled ? historyWithGaps : dayHistory).map(
+											(r) => r.humidity?.toFixed(2),
+										),
 										label: "Humidity",
 										yAxisID: "y1",
 										tension: 0.1,
 										hidden: !scales.y1,
 									},
 									{
-										data: historyWithGaps.map((r) => r.pressure?.toFixed(2)),
+										data: (gapsEnabled ? historyWithGaps : dayHistory).map(
+											(r) => r.pressure?.toFixed(2),
+										),
 										label: "Pressure",
 										yAxisID: "y2",
 										tension: 0.1,
@@ -399,7 +429,7 @@ const visualizeTimeGaps = (rows: GapRow[]) => {
 		}
 
 		const diff = dayjs(rows[i].timestamp).diff(dayjs(rows[i - 1].timestamp), "millisecond");
-		if (diff > avgInterval * 1.5) {
+		if (diff > avgInterval * 1.7) {
 			const numGaps = Math.floor(diff / avgInterval);
 			for (let j = 0; j < numGaps; j++) {
 				gaps.push({
