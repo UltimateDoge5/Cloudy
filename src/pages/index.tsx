@@ -1,3 +1,4 @@
+import { Switch } from "@headlessui/react";
 import { RealtimeChannel, createClient } from "@supabase/supabase-js";
 import {
 	BarController,
@@ -24,7 +25,6 @@ import { Database } from "../../schema";
 import { CloudIcon, DropletIcon } from "../components/icons";
 import { MonthTemperatures } from "../components/monthTemps";
 import { Uptime } from "../components/uptime";
-import { Switch } from "@headlessui/react";
 
 Chart.register(
 	BarController,

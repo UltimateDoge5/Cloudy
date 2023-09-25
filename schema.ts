@@ -39,6 +39,16 @@ export interface Database {
 					highest: number;
 				}[];
 			};
+			get_month_summary: {
+				Args: {
+					input_timestamp: string;
+				};
+				Returns: {
+					day: string;
+					max_temp: number;
+					min_temp: number;
+				}[];
+			};
 		};
 		Enums: {
 			[_ in never]: never;
