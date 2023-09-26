@@ -32,13 +32,6 @@ export interface Database {
 			[_ in never]: never;
 		};
 		Functions: {
-			get_monthly_stats: {
-				Args: Record<PropertyKey, never>;
-				Returns: {
-					lowest: number;
-					highest: number;
-				}[];
-			};
 			get_month_summary: {
 				Args: {
 					input_timestamp: string;
@@ -47,6 +40,19 @@ export interface Database {
 					day: string;
 					max_temp: number;
 					min_temp: number;
+				}[];
+			};
+			get_monthly_stats: {
+				Args: Record<PropertyKey, never>;
+				Returns: {
+					lowest: number;
+					highest: number;
+				}[];
+			};
+			get_months: {
+				Args: Record<PropertyKey, never>;
+				Returns: {
+					month: string;
 				}[];
 			};
 		};
