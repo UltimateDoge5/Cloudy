@@ -14,7 +14,7 @@ import {
 } from "chart.js";
 import "chartjs-adapter-dayjs-4/dist/chartjs-adapter-dayjs-4.esm.js";
 import { Line } from "react-chartjs-2";
-import { Database } from "../../../schema";
+import { Database } from "../../../../schema";
 
 type MinMaxChartProps = Database["public"]["Functions"]["get_month_summary"]["Returns"];
 
