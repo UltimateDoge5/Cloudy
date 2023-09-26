@@ -1,3 +1,4 @@
+import { Switch } from "@headlessui/react";
 import { RealtimeChannel, createClient } from "@supabase/supabase-js";
 import {
 	BarController,
@@ -24,7 +25,7 @@ import { Database } from "../../schema";
 import { CloudIcon, DropletIcon } from "../components/icons";
 import { MonthTemperatures } from "../components/monthTemps";
 import { Uptime } from "../components/uptime";
-import { Switch } from "@headlessui/react";
+import Link from "next/link";
 
 Chart.register(
 	BarController,
@@ -370,6 +371,10 @@ export default function Home() {
 				<div className="col-span-1 row-span-1 m-0 max-w-none px-4 md:col-span-2 lg:col-span-1 lg:ml-6 lg:max-w-md lg:p-0 lg:pt-4 xl:max-w-lg">
 					<h2 className="mb-2 dark:text-text/80">Uptime in the last 24 hours</h2>
 					<Uptime timestamps={dayHistory.map((r) => r.timestamp)} />
+
+					<Link href={`/summary/${dayjs().format("YYYY-MM")}`} className="pt-8 underline">
+						View monthly summary
+					</Link>
 				</div>
 				<div className="col-span-1">
 					<h3 className="mb-2 dark:font-light dark:text-text/80">Current month records</h3>
