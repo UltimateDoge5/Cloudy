@@ -1,3 +1,5 @@
+export const runtime = "edge";
+
 import { createClient } from "@supabase/supabase-js";
 import dayjs from "dayjs";
 import { redirect } from "next/navigation";
@@ -19,7 +21,7 @@ export const generateMetadata = ({ params }: { params: { month: string } }): Met
 
 	return {
 		title: `${dateName} | Cloudy`,
-		description: `Summary of highest and lowest temperatures in${dateName}.`,
+		description: `Summary of highest and lowest temperatures in ${dateName}.`,
 	};
 };
 

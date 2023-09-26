@@ -8,17 +8,14 @@ const MonthSelect = ({ months, currentMonth }: { months: string[]; currentMonth:
 
 	return (
 		<select
-			className="mt-1.5 block rounded-lg px-2 py-1 text-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
+			className="block border-b bg-background px-2 py-1 text-2xl focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
 			onChange={(e) => void router.push(`/summary/${e.target.value}`)}
+			defaultValue={currentMonth}
 			id="monthSelect"
 		>
-			{months.map((month) => (
-				<option
-					key={month}
-					value={dayjs(month).format("YYYY-MM")}
-					defaultChecked={currentMonth === dayjs(month).format("YYYY-MM")}
-				>
-					{dayjs(month).format("MMMM YYYY")}
+			{months.map((date) => (
+				<option key={date} value={dayjs(date).format("YYYY-MM")} className="bg-background text-base">
+					{dayjs(date).format("MMMM YYYY")}
 				</option>
 			))}
 		</select>
