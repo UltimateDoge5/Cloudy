@@ -23,3 +23,7 @@ Even if I had one, I do not have an appropriate location to install it.
 ## Software
 
 The software for the station is in the [driver folder](./driver). It's written in C++ and uses Arduino libraries. For the backend, I've decided to use Supabase, because of the REST database API and the real-time features which allowed an easy integration with the microcontroller.
+
+## Issues
+
+One issue is that I don't have a fully shaded place to put the sensor. That results in ridiculously high temperature readings when the sun is shining on it. I'm working on a solution for that.
