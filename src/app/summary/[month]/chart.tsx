@@ -48,6 +48,11 @@ const MinMaxChart = ({ data }: { data: MinMaxChartProps }) => (
 					label: "Max temperature",
 					tension: 0.4,
 				},
+				{
+					data: data.map((r) => r.avg_temp.toFixed(2)),
+					label: "Avg temperature",
+					tension: 0.4,
+				},
 			],
 		}}
 		options={{

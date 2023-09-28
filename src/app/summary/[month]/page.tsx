@@ -22,6 +22,12 @@ export const generateMetadata = ({ params }: { params: { month: string } }): Met
 	return {
 		title: `${dateName} | Cloudy`,
 		description: `Summary of highest and lowest temperatures in ${dateName}.`,
+		icons: [
+			{
+				rel: "icon",
+				url: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 20 16'><text x='0' y='14'>🌧️</text></svg>",
+			},
+		],
 	};
 };
 
@@ -53,13 +59,18 @@ export default async function Page({ params }: { params: { month: string } }) {
 
 	if (error) {
 		console.error(error);
-		return <h1>Error {error.message}</h1>;
+		return (
+			<div className="m-auto mt-6 h-1/4 w-1/4 rounded bg-red-400 p-4 text-red-800 dark:bg-red-300">
+				<h1 className="text-2xl">Database error</h1>
+				<h2>Sorry but there was an error while fetching the data 😥</h2>
+			</div>
+		);
 	}
 
 	if (data.length === 0) {
 		return (
 			<div className="m-auto h-1/4 w-1/4 rounded bg-primary/80 p-4">
-				<h1>No data</h1>
+				<h1 className="text-2xl">No data</h1>
 				<h2>Sorry but there is no data for this month 😥</h2>
 			</div>
 		);

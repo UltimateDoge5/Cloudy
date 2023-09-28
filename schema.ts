@@ -40,6 +40,7 @@ export interface Database {
 					day: string;
 					max_temp: number;
 					min_temp: number;
+					avg_temp: number;
 				}[];
 			};
 			get_monthly_stats: {

@@ -35,6 +35,7 @@ export const Uptime = ({ timestamps }: { timestamps: string[] }) => {
 
 	return (
 		<Bar
+			aria-description="Uptime chart showing the number of updates received in the last 24 hours per 30 minutes"
 			ref={chartRef}
 			data={{
 				labels,
