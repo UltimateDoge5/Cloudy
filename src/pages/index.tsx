@@ -142,6 +142,12 @@ export default function Home() {
 		<>
 			<Head>
 				<title>Cloudy | Weather station</title>
+				<meta
+					name="description"
+					content="A weather station project based on the BME280 sensor with live updates"
+				/>
+				<meta name="keywords" content="weather, station, bme280, sensor, live" />
+				<meta name="author" content="Piotr Kozak" />
 				<link
 					rel="icon"
 					href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 20 16'><text x='0' y='14'>🌧️</text></svg>"

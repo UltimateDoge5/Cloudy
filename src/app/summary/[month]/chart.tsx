@@ -63,6 +63,7 @@ const MinMaxChart = ({ data }: { data: MinMaxChartProps }) => (
 					type: "timeseries",
 					time: {
 						unit: "day",
+						tooltipFormat: "DD MMM YYYY",
 					},
 					ticks: {
 						color: styles?.getPropertyValue("--color-text"),
