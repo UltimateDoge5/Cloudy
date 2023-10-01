@@ -234,11 +234,11 @@ export default function Home() {
 					</div>
 				</div>
 
-				<div className="col-span-1 row-span-1 p-4 md:col-span-2 md:row-span-1 lg:p-0 lg:pt-4 xl:min-h-[356px]">
+				<div className="col-span-1 row-span-1 min-h-0 p-4 md:col-span-2 md:row-span-1 lg:p-0 lg:pt-4 xl:min-h-[356px]">
 					<div className="mb-2 flex items-center justify-between">
 						<h3 className=" dark:text-text/80">Last 24h graph</h3>
 						<Switch.Group>
-							<div className="flex items-center">
+							<div className="hidden items-center md:flex">
 								<Switch.Label className="mr-4 dark:text-text/80">Enable time gaps</Switch.Label>
 								<Switch
 									checked={gapsEnabled}
@@ -383,9 +383,12 @@ export default function Home() {
 					<h2 className="mb-2 dark:text-text/80">Uptime in the last 24 hours</h2>
 					<Uptime timestamps={dayHistory.map((r) => r.timestamp)} />
 
-					<Link href={`/summary/${dayjs().format("YYYY-MM")}`} className="pt-8 underline">
-						View monthly summary
-					</Link>
+					<div className="mt-4 rounded-lg bg-secondary/60 p-2">
+						-{" "}
+						<Link href={`/summary/${dayjs().format("YYYY-MM")}`} className="pt-8 underline">
+							View monthly summary
+						</Link>
+					</div>
 				</div>
 				<div className="col-span-1">
 					<h3 className="mb-2 dark:font-light dark:text-text/80">Current month records</h3>

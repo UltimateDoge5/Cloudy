@@ -7,6 +7,7 @@ import { Metadata } from "next/types";
 import MinMaxChart from "./chart";
 import { Database } from "../../../../schema";
 import MonthSelect from "components/monthSelect";
+import Link from "next/link";
 
 export const generateMetadata = ({ params }: { params: { month: string } }): Metadata => {
 	const [year, month] = params.month.split("-").map((value) => parseInt(value));
@@ -60,8 +61,8 @@ export default async function Page({ params }: { params: { month: string } }) {
 	if (error) {
 		console.error(error);
 		return (
-			<div className="m-auto mt-6 h-1/4 w-1/4 rounded bg-red-400 p-4 text-red-800 dark:bg-red-300">
-				<h1 className="text-2xl">Database error</h1>
+			<div className="m-auto mt-6 h-auto w-[98%] rounded bg-red-400 p-4 text-red-800 dark:bg-red-300 md:h-1/4 md:w-1/4">
+				<h1 className="text-xl md:text-2xl">Database error</h1>
 				<h2>Sorry but there was an error while fetching the data 😥</h2>
 			</div>
 		);
@@ -69,8 +70,8 @@ export default async function Page({ params }: { params: { month: string } }) {
 
 	if (data.length === 0) {
 		return (
-			<div className="m-auto h-1/4 w-1/4 rounded bg-primary/80 p-4">
-				<h1 className="text-2xl">No data</h1>
+			<div className="m-auto h-auto w-[98%] rounded bg-primary/80 p-4 md:h-1/4 md:w-1/4">
+				<h1 className="text-xl md:text-2xl">No data</h1>
 				<h2>Sorry but there is no data for this month 😥</h2>
 			</div>
 		);
@@ -78,17 +79,20 @@ export default async function Page({ params }: { params: { month: string } }) {
 
 	return (
 		<>
-			<h1 className="m-auto flex w-fit items-center gap-3 pb-4 text-4xl">
+			<Link href="/" className="absolute left-4 top-2 hidden text-3xl lg:block">
+				🌧️ Cloudy
+			</Link>
+			<h1 className="m-auto flex w-fit items-center gap-3 pb-4 text-2xl md:text-4xl">
 				<label htmlFor="monthSelect">Summary of</label>
 				<MonthSelect
-					months={months!.map((month) => month.month)}
+					months={months!.map(({ month }) => month).sort((a, b) => (dayjs(a).isAfter(dayjs(b)) ? -1 : 1))}
 					currentMonth={dayjs()
 						.set("year", parseInt(year))
 						.set("month", parseInt(month) - 1)
 						.format("YYYY-MM")}
 				/>
 			</h1>
-			<div className="m-auto w-4/5">
+			<div className="m-auto w-full lg:w-4/5">
 				<MinMaxChart data={data.sort((a, b) => (dayjs(a.day).isBefore(dayjs(b.day)) ? -1 : 1))} />
 			</div>
 		</>
