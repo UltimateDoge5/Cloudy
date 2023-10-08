@@ -8,6 +8,7 @@
 #include <Adafruit_BME280.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SH110X.h>
+#include <EEPROM.h>
 #include "logo.h"
 // Contains the WiFi credentials and the Supabase URL and key
 #include "envs.h"
@@ -96,6 +97,9 @@ void setup()
       delay(1500);
     }
   }
+
+  EEPROM.writeInt(0x00, 0);
+  EEPROM.commit();
 
   WiFi.begin(ssid, password);
   Serial.print("Connecting...");
@@ -223,6 +227,17 @@ void UploadData(void *pvParameters)
 #endif
       delay(DATABASE_INTERVAL);
       return;
+
+      // Read restart count from eeprom
+      int restarts = EEPROM.read(0x00);
+      if (restarts == 3)
+      {
+        return;
+      }
+
+      EEPROM.writeInt(0x00, restarts + 1);
+      EEPROM.commit();
+      ESP.restart();
     }
 
     HTTPClient http;
