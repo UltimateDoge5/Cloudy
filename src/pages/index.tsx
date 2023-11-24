@@ -149,8 +149,9 @@ export default function Home() {
 				<meta name="keywords" content="weather, station, bme280, sensor, live" />
 				<meta name="author" content="Piotr Kozak" />
 
-				<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
-				<link rel="icon" href="/favicon.ico" type="image/x-icon" />
+				<link rel="icon" href="/favicon.ico" />
+				<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+				<link rel="manifest" href="/manifest.json" />
 			</Head>
 
 			<main className="m-auto grid h-full w-full grid-cols-1 grid-rows-[128px,_128px,_256px,_256px,_128px] gap-2 p-2 md:grid-cols-2 md:grid-rows-[128px,auto,auto,128px] lg:grid-cols-[0.9fr_1fr_1.1fr] lg:grid-rows-[128px,1fr,_128px] xl:w-4/5">

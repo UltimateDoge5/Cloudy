@@ -217,9 +217,9 @@ void UploadData(void *pvParameters)
   while (1)
   {
     int time = millis();
-    int temp = bme.readTemperature();
+    float temp = bme.readTemperature();
     int pressure = bme.readPressure() / 100.0F;
-    if (temp == NULL || temp == INTEGER_LIMIT || pressure < 0) // Avoid uploading invalid data
+    if (temp == INTEGER_LIMIT || pressure < 0) // Avoid uploading invalid data
     {
       Serial.println("Error while reading data, skipping upload");
 #ifdef DEBUG_LED

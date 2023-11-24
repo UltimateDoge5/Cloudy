@@ -24,9 +24,10 @@ export const generateMetadata = ({ params }: { params: { month: string } }): Met
 		title: `${dateName} | Cloudy`,
 		description: `Summary of highest and lowest temperatures in ${dateName}.`,
 		icons: [
-			{ rel: "shortcut icon", url: "/favicon.ico", type: "image/x-icon" },
-			{ rel: "icon", url: "/favicon.ico", type: "image/x-icon" },
+			{ rel: "icon", url: "/favicon.ico" },
+			{ rel: "apple-touch-icon", url: "/apple-touch-icon.png" },
 		],
+		manifest: "/manifest.json",
 	};
 };
 
