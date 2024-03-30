@@ -18,14 +18,15 @@ import {
 import "chartjs-adapter-dayjs-4/dist/chartjs-adapter-dayjs-4.esm.js";
 import dayjs from "dayjs";
 import Head from "next/head";
+import Link from "next/link";
 import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { Line } from "react-chartjs-2";
 import { ChartJSOrUndefined } from "react-chartjs-2/dist/types";
 import { Database } from "../../schema";
+import { Row, Scales, calcAvgInterval, visualizeIDGaps, visualizeTimeGaps } from "../common";
 import { CloudIcon, DropletIcon } from "../components/icons";
 import { MonthTemperatures } from "../components/monthTemps";
 import { Uptime } from "../components/uptime";
-import Link from "next/link";
 
 Chart.register(
 	BarController,
@@ -266,16 +267,16 @@ export default function Home() {
 								),
 								datasets: [
 									{
-										data: (gapsEnabled ? historyWithGaps : dayHistory).map(
-											(r) => r.temperature?.toFixed(2),
+										data: (gapsEnabled ? historyWithGaps : dayHistory).map((r) =>
+											r.temperature?.toFixed(2),
 										),
 										label: "Temperature",
 										tension: 0.1,
 										hidden: !scales.y,
 									},
 									{
-										data: (gapsEnabled ? historyWithGaps : dayHistory).map(
-											(r) => r.humidity?.toFixed(2),
+										data: (gapsEnabled ? historyWithGaps : dayHistory).map((r) =>
+											r.humidity?.toFixed(2),
 										),
 										label: "Humidity",
 										yAxisID: "y1",
@@ -283,8 +284,8 @@ export default function Home() {
 										hidden: !scales.y1,
 									},
 									{
-										data: (gapsEnabled ? historyWithGaps : dayHistory).map(
-											(r) => r.pressure?.toFixed(2),
+										data: (gapsEnabled ? historyWithGaps : dayHistory).map((r) =>
+											r.pressure?.toFixed(2),
 										),
 										label: "Pressure",
 										yAxisID: "y2",
@@ -376,19 +377,27 @@ export default function Home() {
 							}}
 						/>
 					) : (
-						<div className="h-52 w-full animate-pulse rounded bg-secondary/40 dark:bg-secondary/80 lg:h-96 xl:h-[356px]" />
+						<div className="h-52 w-full animate-pulse rounded bg-secondary/40 lg:h-96 xl:h-[356px] dark:bg-secondary/80" />
 					)}
 				</div>
 				<div className="col-span-1 row-span-1 m-0 max-w-none px-4 md:col-span-2 lg:col-span-1 lg:ml-6 lg:max-w-md lg:p-0 lg:pt-4 xl:max-w-lg">
 					<h2 className="mb-2 dark:text-text/80">Uptime in the last 24 hours</h2>
 					<Uptime timestamps={dayHistory.map((r) => r.timestamp)} />
 
-					<div className="mt-4 rounded-lg bg-secondary/60 p-2">
-						-{" "}
-						<Link href={`/summary/${dayjs().format("YYYY-MM")}`} className="pt-8 underline">
-							View monthly summary
-						</Link>
-					</div>
+					<ul className="mt-4 rounded-lg bg-secondary/60 p-2">
+						<li>
+							-{" "}
+							<Link href={`/summary/${dayjs().format("YYYY-MM")}`} className="pt-8 underline">
+								View monthly summary
+							</Link>
+						</li>
+						<li>
+							-{" "}
+							<Link href="/chart" className="underline">
+								View day chart
+							</Link>
+						</li>
+					</ul>
 				</div>
 				<div className="col-span-1">
 					<h3 className="mb-2 dark:font-light dark:text-text/80">Current month records</h3>
@@ -399,110 +408,9 @@ export default function Home() {
 	);
 }
 
-/**
- * Sometimes the data gets manually deleted from the database
- * This function visualizes the gaps made by the missing data\
- * By adding fake null data with predicted timestamps
- */
-const visualizeIDGaps = (rows: Row[]) => {
-	const gaps: GapRow[] = [];
-	const avgInterval = calcAvgInterval(rows.map((r) => r.timestamp));
-
-	for (let i = 0; i < rows.length; i++) {
-		if (i === 0) {
-			gaps.push(rows[i]);
-			continue;
-		}
-
-		const diff = rows[i].id - rows[i - 1].id;
-		if (diff > 1) {
-			for (let j = 0; j < diff - 1; j++) {
-				gaps.push({
-					id: rows[i - 1].id + j + 1,
-					temperature: undefined,
-					pressure: undefined,
-					humidity: undefined,
-					timestamp: new Date(
-						new Date(rows[i - 1].timestamp).getTime() + avgInterval * (j + 1),
-					).toISOString(),
-				});
-			}
-		}
-		gaps.push(rows[i]);
-	}
-	return gaps;
-};
-
-/**
- * Vizualize gaps between timestamps by calculating the average interval
- * By adding fake null data with predicted timestamps using the interval
- */
-const visualizeTimeGaps = (rows: GapRow[]) => {
-	const gaps: GapRow[] = [];
-	const avgInterval = calcAvgInterval(rows.map((r) => r.timestamp));
-
-	for (let i = 0; i < rows.length; i++) {
-		if (i === 0) {
-			gaps.push(rows[i]);
-			continue;
-		}
-
-		const diff = dayjs(rows[i].timestamp).diff(dayjs(rows[i - 1].timestamp), "millisecond");
-		if (diff > avgInterval * 1.7) {
-			const numGaps = Math.floor(diff / avgInterval);
-			for (let j = 0; j < numGaps; j++) {
-				gaps.push({
-					// The ids won't be correct at this point, as for sure there will be duplicates
-					// But at this stage they are not needed
-					id: rows[i - 1].id + j + 1,
-					temperature: undefined,
-					pressure: undefined,
-					humidity: undefined,
-					timestamp: dayjs(rows[i - 1].timestamp)
-						.add(avgInterval * (j + 1), "millisecond")
-						.toISOString(),
-				});
-			}
-		}
-		gaps.push(rows[i]);
-	}
-	return gaps;
-};
-
-const calcAvgInterval = (timestamps: string[]) => {
-	let sum = 0;
-	for (let i = 0; i < timestamps.length - 1; i++) {
-		const diff = new Date(timestamps[i + 1]).getTime() - new Date(timestamps[i]).getTime();
-		sum += diff;
-	}
-	return sum / timestamps.length;
-};
-
 const calculateDewPoint = (temperature: number, humidity: number) => {
 	const a = 17.27;
 	const b = 237.7;
 	const t = (a * temperature) / (b + temperature) + Math.log(humidity / 100);
 	return (b * t) / (a - t);
 };
-
-interface GapRow {
-	id: number;
-	temperature: number | undefined;
-	pressure: number | undefined;
-	humidity: number | undefined;
-	timestamp: string;
-}
-
-export interface Row {
-	id: number;
-	temperature: number;
-	pressure: number;
-	humidity: number;
-	timestamp: string;
-}
-
-interface Scales {
-	y: boolean;
-	y1: boolean;
-	y2: boolean;
-}
